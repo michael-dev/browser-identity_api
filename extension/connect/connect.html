@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Shop-Adressen – Verbinden</title>
+  <link rel="stylesheet" href="../options/options.css">
+  <link rel="stylesheet" href="connect.css">
+</head>
+<body>
+  <main>
+    <h1>Shop-Adressen mit Roundcube verbinden?</h1>
+    <p id="status">Lade …</p>
+    <section id="details" hidden>
+      <p>Server</p>
+      <p id="host" class="host"></p>
+      <p class="hint">API-URL: <span id="url"></span><br>Konto: <span id="user"></span></p>
+      <p id="warning" class="warning" hidden></p>
+      <p>Nur bestätigen, wenn das die Adresse deines Webmails ist und du gerade selbst in dessen Einstellungen
+        „Mit Browser-Erweiterung verbinden“ gewählt hast.</p>
+      <div class="buttons">
+        <button id="confirm" type="button" class="primary">Verbinden</button>
+        <button id="cancel" type="button">Abbrechen</button>
+      </div>
+    </section>
+  </main>
+  <script src="../lib/compat.js"></script>
+  <script src="connect.js"></script>
+</body>
+</html>

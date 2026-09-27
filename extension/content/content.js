@@ -2,11 +2,6 @@
 (() => {
   'use strict';
 
-  if (window.__rcidLoaded) {
-    return;
-  }
-  window.__rcidLoaded = true;
-
   // e-mail hints in field attributes and nearby text (en, de, fr, es, it, nl, nordic)
   const EMAIL_HINT = /e-?mail|mail[-_ ]?addr|\bmail\b|courriel|correo|posta elettronica|emailadres|e-?post\b|sähköposti/i;
   const CONFIRM_HINT = /confirm|repeat|retype|verif|again|wiederhol|bestaetig|bestätig|kontroll|[-_]?2$/i;
@@ -189,7 +184,12 @@
    * recognized e-mail field; if the page has none, the text field the user
    * focused last (covers e-mail fields without any usable hint).
    */
-  function focusedTarget() {
+  function focusedTarget(context) {
+    // context menu without element id (Chromium): the right-clicked field has the focus
+    const active = deepActiveElement();
+    if (context && usable(active) && isTextInput(active)) {
+      return active;
+    }
     if (usable(lastInput)) {
       return lastInput;
     }
@@ -202,7 +202,8 @@
    */
   function learn(el, explicit) {
     const sig = signature(el);
-    if (sig && (explicit || el === deepActiveElement()) && isTextInput(el) && !isEmailInput(el)) {
+    // implicitly (focused field) only in the top frame, not in embedded third-party frames
+    if (sig && (explicit || (el === deepActiveElement() && window === window.top)) && isTextInput(el) && !isEmailInput(el)) {
       (learned = learned || new Set()).add(sig);
       browser.runtime.sendMessage({ type: 'learnField', signature: sig }).catch(() => {});
     }
@@ -219,18 +220,17 @@
   // -------------------------------------------------------------------------
   // Settings
 
+  // Settings come from the background, briefly cached. No storage listener here:
+  // it would get every change, the token included, into each website's process.
+  let settingsTime = 0;
   async function loadSettings() {
-    if (!settings) {
+    if (!settings || Date.now() - settingsTime > 5000) {
       const res = await browser.runtime.sendMessage({ type: 'settings' });
       settings = res && res.ok ? res.data : { configured: false, inlineButton: false, fillConfirm: true };
+      settingsTime = Date.now();
     }
     return settings;
   }
-
-  browser.storage.onChanged.addListener(() => {
-    settings = null;
-    learned = null;
-  });
 
   // -------------------------------------------------------------------------
   // Overlay UI (closed shadow DOM, isolated from page styles)
@@ -445,11 +445,19 @@
     };
 
     const use = (email) => {
+      if (!usable(input)) {
+        // the page replaced the field meanwhile
+        closePanel();
+        toast(`${email} erzeugt – das Feld gibt es nicht mehr, bitte über das Symbol der Erweiterung einfügen.`);
+        return;
+      }
       learn(input, true);
       const n = fill(input, email);
       closePanel();
       toast(n > 1 ? `${email} eingefügt (${n} Felder)` : `${email} eingefügt`);
     };
+    // the extension may have been updated or reloaded meanwhile
+    const ask = (msg) => browser.runtime.sendMessage(msg).catch((e) => ({ ok: false, error: 'Erweiterung nicht erreichbar (' + e.message + '). Bitte die Seite neu laden.' }));
 
     const renderList = (identities) => {
       list.replaceChildren();
@@ -467,7 +475,7 @@
       listTimer = setTimeout(async () => {
         const shop = shopInput.value.trim();
         if (!RcShop.sanitize(shop)) return renderList([]);
-        const res = await browser.runtime.sendMessage({ type: 'list', shop });
+        const res = await ask({ type: 'list', shop });
         if (res && res.ok) renderList(res.data);
       }, 400);
     });
@@ -486,7 +494,7 @@
       }
       createBtn.disabled = true;
       setStatus('Erzeuge Adresse …');
-      const res = await browser.runtime.sendMessage({ type: 'create', shop, domain: domainSelect.value });
+      const res = await ask({ type: 'create', shop, domain: domainSelect.value });
       createBtn.disabled = false;
       if (res && res.ok) {
         use(res.data.email);
@@ -495,7 +503,7 @@
       }
     });
 
-    const res = await browser.runtime.sendMessage({ type: 'context' });
+    const res = await ask({ type: 'context' });
     if (!res || !res.ok) {
       setStatus(res ? res.error : 'Unbekannter Fehler', true);
       return;
@@ -504,7 +512,7 @@
     if (!ctx.configured) {
       setStatus('');
       createBtn.disabled = true;
-      status.append('Noch nicht eingerichtet: im Webmail unter Einstellungen → Shop-Adressen-API ein Token erzeugen und „Mit Browser-Erweiterung verbinden“ wählen, oder ',
+      status.append('Noch nicht eingerichtet: im Webmail unter Einstellungen → Einstellungen → Shop-Adressen-API ein Token erzeugen und „Mit Browser-Erweiterung verbinden“ wählen, oder ',
         el('a', { text: 'manuell einrichten', onclick: () => browser.runtime.sendMessage({ type: 'openOptions' }) }), '.');
       return;
     }
@@ -528,8 +536,8 @@
 
   document.addEventListener('focusin', async (e) => {
     const target = realTarget(e);
-    if (!isTextInput(target)) {
-      return;
+    if (!isTextInput(target) || (ui && target.getRootNode() === ui.root)) {
+      return; // not a text field, or the shop name field of our own panel
     }
     lastTextInput = target;
     if (!isEmailInput(target)) {
@@ -568,8 +576,9 @@
   // -------------------------------------------------------------------------
   // "Connect" button in the Roundcube settings (shown once after creating a token)
 
-  // Only reacts to a real click on the button; the page is not modified before,
-  // so websites can't detect the extension through it.
+  // Only reacts to a real click on the button. Any website could show such a
+  // button, so nothing is stored here: the extension checks the token and asks
+  // for confirmation in its own page (see background.js, connect/connect.html).
   document.addEventListener('click', async (e) => {
     const button = e.target instanceof Element ? e.target.closest('#identityapi-connect button') : null;
     const box = button && button.parentElement;
@@ -581,34 +590,12 @@
     const hint = box.querySelector('.hint');
     const say = (text) => { if (hint) hint.textContent = text; };
 
-    // test the token first, so the question can name account and server
     say('Prüfe …');
-    const check = await browser.runtime.sendMessage({ type: 'connectCheck', token: box.dataset.token, api: box.dataset.api });
-    if (!check || !check.ok) {
-      say(check ? check.error : 'Unbekannter Fehler');
-      return;
-    }
-    const { url, user, previousUrl } = check.data;
-    let question = `Erweiterung „Shop-Adressen“ verbinden?\n\nKonto: ${user}\nAPI: ${url}`;
-    if (previousUrl) {
-      question += previousUrl === url
-        ? '\n\nDas bisherige Token wird durch das neue ersetzt.'
-        : `\n\nDie bisherige Verbindung zu ${previousUrl} wird ersetzt.`;
-    }
-    if (!window.confirm(question)) {
-      say('');
-      return;
-    }
-    button.disabled = true;
-    say('Verbinde …');
-    const res = await browser.runtime.sendMessage({ type: 'connect', token: box.dataset.token, api: box.dataset.api });
-    if (res && res.ok) {
-      button.textContent = '✓ Verbunden';
-      say(`Die Erweiterung ist mit ${res.data.url} verbunden (${res.data.user}). Du kannst jetzt in Bestellformularen Shop-Adressen erzeugen.`);
-    } else {
-      button.disabled = false;
-      say(res ? res.error : 'Unbekannter Fehler');
-    }
+    const res = await browser.runtime.sendMessage({ type: 'connectOffer', token: box.dataset.token, api: box.dataset.api })
+      .catch((err) => ({ ok: false, error: err.message }));
+    say(res && res.ok
+      ? 'Bitte die Verbindung im neu geöffneten Tab der Erweiterung bestätigen.'
+      : (res ? res.error : 'Unbekannter Fehler'));
   }, true);
 
   // -------------------------------------------------------------------------
@@ -619,7 +606,7 @@
       case 'fill': {
         let target = targetFromMenu(msg.targetElementId);
         if (!target && msg.mode !== 'heuristic') {
-          target = focusedTarget();
+          target = focusedTarget(msg.mode === 'context');
           if (!target && msg.mode === 'focused') {
             return undefined; // let another frame answer
           }
@@ -638,6 +625,8 @@
         }
         return Promise.resolve({ filled });
       }
+      case 'ping':
+        return Promise.resolve(true);
       case 'openPanel':
         openPanel(targetFromMenu(msg.targetElementId) || lastInput);
         return Promise.resolve(true);

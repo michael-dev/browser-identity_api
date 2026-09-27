@@ -3,7 +3,10 @@
   'use strict';
 
   // Chromium: chrome.* (promise based in Manifest V3) instead of browser.*
-  const isChromium = typeof g.browser === 'undefined' && typeof g.chrome !== 'undefined';
+  // decided by the extension APIs, not by "browser" existing: in content scripts an
+  // element with id="browser" would show up as window.browser (DOM clobbering)
+  const hasApi = (ns) => Boolean(ns && ns.runtime && ns.runtime.id);
+  const isChromium = !hasApi(g.browser) && hasApi(g.chrome);
   if (isChromium) {
     g.browser = g.chrome;
   }

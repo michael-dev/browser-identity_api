@@ -31,21 +31,45 @@ let ctx;
   await rc.fill('#rcmloginpwd', 'test');
   await Promise.all([rc.waitForNavigation(), rc.click('#rcmloginsubmit')]);
   await rc.goto(`${rcUrl}?_task=settings&_action=edit-prefs&_section=identityapi&_framed=1`);
-  // the page checks that the API answers at the shown URL (rewrite rule)
-  await rc.waitForTimeout(1000);
+  // the page checks that the API answers at the shown URL (rewrite rule) and gets the Authorization header
+  await rc.waitForSelector('#identityapi-urlcheck[data-state]', { state: 'attached', timeout: 10000 }).catch(() => {});
   check('settings: API URL shown and reachable', (await rc.inputValue('#identityapi-url')) === `${rcUrl}api/identity/`
-    && (await rc.textContent('#identityapi-urlcheck')) === '', await rc.textContent('#identityapi-urlcheck'));
+    && (await rc.getAttribute('#identityapi-urlcheck', 'data-state')) === 'ok', await rc.textContent('#identityapi-urlcheck'));
   await rc.fill('input[name="_identity_api_new_label"]', 'Chromium e2e');
   await Promise.all([rc.waitForNavigation(), rc.click('button.submit')]);
   const token = await rc.inputValue('#identityapi-newtoken');
-  const dialogs = [];
-  rc.on('dialog', async (d) => { dialogs.push(d.message()); await d.accept(); });
-  await rc.click('#identityapi-connect button');
-  await rc.waitForFunction(() => document.querySelector('#identityapi-connect button').textContent.includes('Verbunden'),
-    null, { timeout: 15000 }).catch(() => {});
-  check('connect: confirmation names the account', Boolean(dialogs[0] && dialogs[0].includes(`Konto: ${user}`)), JSON.stringify(dialogs));
-  const stored = await sw.evaluate(() => chrome.storage.local.get(['apiUrl', 'token']));
-  check('connect: token and API URL stored', stored.token === token && stored.apiUrl === `${rcUrl}api/identity/`, JSON.stringify(stored));
+  // the extension asks in its own page, nothing is stored before
+  const [confirmPage] = await Promise.all([
+    ctx.waitForEvent('page', { timeout: 15000 }),
+    rc.click('#identityapi-connect button'),
+  ]);
+  await confirmPage.waitForSelector('#details:not([hidden])', { timeout: 15000 }).catch(() => {});
+  check('connect: own confirmation page shows server and account',
+    confirmPage.url().startsWith(`chrome-extension://${extId}/connect/connect.html`)
+    && (await confirmPage.textContent('#host')) === new URL(rcUrl).host && (await confirmPage.textContent('#user')) === user,
+    confirmPage.url());
+  const before = await sw.evaluate(() => chrome.storage.local.get(['token']));
+  check('connect: nothing stored before confirming', !before.token, JSON.stringify(before));
+  await confirmPage.click('#confirm');
+  await confirmPage.waitForSelector('#status.ok', { timeout: 15000 }).catch(() => {});
+  const stored = await sw.evaluate(() => chrome.storage.local.get(['apiUrl', 'token', 'connectedUser']));
+  check('connect: token and API URL stored', stored.token === token && stored.apiUrl === `${rcUrl}api/identity/`
+    && stored.connectedUser === user, JSON.stringify(stored));
+
+  // another website imitating the connect button: no confirmation page, nothing changes
+  const fake = await ctx.newPage();
+  await fake.goto('http://www.test-shop.example/fake-connect.html');
+  let opened = false;
+  const onPage = () => { opened = true; };
+  ctx.on('page', onPage);
+  await fake.click('#identityapi-connect button');
+  await fake.waitForFunction(() => document.querySelector('.hint').textContent.length > 0, null, { timeout: 15000 }).catch(() => {});
+  await fake.waitForTimeout(1000);
+  ctx.off('page', onPage);
+  const after = await sw.evaluate(() => chrome.storage.local.get(['apiUrl', 'token']));
+  check('connect from another website refused', !opened && after.token === token && after.apiUrl === stored.apiUrl,
+    await fake.textContent('.hint'));
+  await fake.close();
 
   // shop page: inline button -> panel -> create -> fields filled
   const shop = await ctx.newPage();

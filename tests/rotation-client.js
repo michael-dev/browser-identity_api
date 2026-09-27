@@ -24,11 +24,20 @@ const check = (name, cond, extra = '') => {
   failed += cond ? 0 : 1;
 };
 
+// count the rotation requests of the client
+let rotations = 0;
+const realFetch = globalThis.fetch;
+globalThis.fetch = (url, init) => {
+  if (String(url).endsWith('/v1/token/rotate')) rotations++;
+  return realFetch(url, init);
+};
+
 (async () => {
   // parallel requests while rotation is due: exactly one rotation, all succeed
   const results = await Promise.allSettled([RcApi.info(), RcApi.list('bookshop'), RcApi.info()]);
   check('client: parallel requests succeed', results.every((r) => r.status === 'fulfilled'),
     JSON.stringify(results.map((r) => r.reason && r.reason.message)));
+  check('client: exactly one rotation', rotations === 1, `${rotations} rotations`);
   check('client: token rotated', store.token !== token && /^\d+\.[a-f0-9]{8}\./.test(store.token));
   check('client: old token invalid', (await raw(token)) === 401);
   check('client: new token valid', (await raw(store.token)) === 200);

@@ -2,7 +2,8 @@
 (function (root) {
   'use strict';
 
-  // Public suffixes with two labels that are common for shops. Not complete,
+  // Public suffixes with two labels that are common for shops (keep in sync with
+  // identity_api_generator::MULTI_PART_SUFFIXES). Not complete,
   // the suggested shop name can always be edited by the user.
   const MULTI_PART_SUFFIXES = new Set([
     'co.uk', 'org.uk', 'me.uk', 'ltd.uk', 'plc.uk',
@@ -10,6 +11,8 @@
     'com.au', 'net.au', 'org.au',
     'co.nz', 'co.jp', 'co.kr', 'co.za', 'co.in', 'co.il',
     'com.br', 'com.cn', 'com.hk', 'com.mx', 'com.pl', 'com.tr', 'com.tw', 'com.ar', 'com.sg',
+    // hosting platforms: every shop has its own subdomain
+    'myshopify.com', 'wixsite.com', 'square.site', 'company.site', 'jimdosite.com', 'webflow.io', 'github.io', 'netlify.app', 'vercel.app', 'pages.dev', 'blogspot.com', 'wordpress.com',
   ]);
 
   /** Normalize like the server does (identity_api_generator::sanitize_shop). */

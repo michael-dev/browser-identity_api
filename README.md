@@ -69,6 +69,17 @@ Set up the **rewrite rule** for the API URL in the web server, see [REST API](#r
 List `identity_api` **after** plugins that restrict access in their `startup` hook (IP filters,
 maintenance mode), because API requests end in this plugin's `startup` hook.
 
+### Upgrading from 2.0
+
+2.1 uses the API only through its own URL (`<roundcube-url>/api/identity/`):
+
+1. Set up the rewrite rule (see [REST API](#rest-api)) and check the API URL in the Roundcube settings
+   (no warning below it).
+2. Update the plugin. Extensions and Shortcuts of 2.0 keep working.
+3. Update the extension, open its options and replace the webmail URL with the API URL shown in
+   Roundcube (the token stays valid), or create a new token and click *Connect browser extension*.
+4. Change iOS Shortcuts to `<API URL>v1/identities`, see [docs/ios.md](docs/ios.md).
+
 ### Configuration
 
 | Option | Default | Description |
@@ -77,9 +88,13 @@ maintenance mode), because API requests end in this plugin's `startup` hook.
 | `identity_api_default_prefix` | `''` | Default for `{prefix}`. Empty: first letter of the username (`michael@…` → `m`). |
 | `identity_api_url` | `'api/identity/'` | URL of the REST API, relative to Roundcube's URL or absolute. The web server maps it to Roundcube with a rewrite rule (see [REST API](#rest-api)). |
 | `identity_api_domains` | `[]` | Default domains if a user hasn't configured any. The first one is the default. The placeholders `%n`, `%t` and `%d` (e.g. `%d`: `webmail.example.org` → `example.org`) come from the Host header and are only used if Roundcube's `trusted_host_patterns` is set. Empty: domain of the user's default identity. |
-| `identity_api_allowed_domains` | `[]` | Restricts the domains users may configure, e.g. `['example.org', '*.example.org']`. Empty: any domain (like `identities_level` 0). |
-| `identity_api_random_length` | `8` | Length of `{random}` |
-| `identity_api_random_chars` | `a-z0-9` | Characters used for `{random}` |
+| `identity_api_allowed_domains` | `[]` | Restricts the domains users may configure themselves, e.g. `['example.org', '*.example.org']`. Empty: any domain (like `identities_level` 0). It doesn't apply to `identity_api_domains` or the fallback. |
+| `identity_api_random_length` | `8` | Length of `{random}`, at least 4 |
+| `identity_api_random_chars` | `'abcdefghijklmnopqrstuvwxyz0123456789'` | Characters used for `{random}` (listed one by one, no ranges) |
+
+Changing the pattern, `identity_api_random_length` or `identity_api_random_chars` later hides older
+addresses from listing and deleting when they no longer match, and the Postfix lookup
+([docs/postfix.md](docs/postfix.md)) has to match the new format.
 | `identity_api_shop_maxlength` | `30` | Maximum length of `{shop}` |
 | `identity_api_token_rotation` | `30` | Clients are asked to rotate their token after this many days (0 = no rotation), see below. |
 | `identity_api_token_lifetime` | `90` | A token that was not rotated for this many days expires, e.g. on a device that is no longer used (0 = never). Values not larger than the rotation interval are raised to twice the interval. |
@@ -138,16 +153,25 @@ location ^~ /api/identity/ {
 ```
 
 ```apache
-# Apache, in <Directory> of Roundcube's document root or its .htaccess
-RewriteEngine On
+# Apache: in Roundcube's .htaccess, directly after "RewriteEngine On"
+# (before Roundcube's own rules, which would answer 403)
 RewriteRule ^api/identity(/.*)$ index.php?_task=identity_api&_path=$1 [QSA,L]
-# pass the "Authorization" header to PHP-FPM / FastCGI
+# pass the "Authorization" header to PHP (PHP-FPM / FastCGI)
 CGIPassAuth On
 ```
 
-Both rules are tested in CI with PHP-FPM. For Roundcube in a subdirectory (e.g. `/roundcube/`), adjust
-the paths. For another location of the API, set `identity_api_url`. The settings page shows the API
-URL and warns if the API doesn't answer there.
+Both rules are tested in CI with PHP-FPM, the Apache rule in Roundcube's own `.htaccess` (1.6 and
+1.7). `CGIPassAuth` in `.htaccess` needs `AllowOverride AuthConfig` (or `All`). If `.htaccess` files
+are disabled (`AllowOverride None`), put the lines with `RewriteEngine On` into the `<Directory>` block
+of Roundcube's document root instead.
+
+For Roundcube in a subdirectory, e.g. `/roundcube/` (not tested): nginx
+`location ^~ /roundcube/api/identity/ { rewrite ^/roundcube/api/identity(/.*)$ /roundcube/index.php?_task=identity_api&_path=$1 last; }`,
+Apache the same lines in that directory's `.htaccess`. For another location of the API, set
+`identity_api_url`.
+
+The settings page shows the API URL and warns if the API doesn't answer there or the web server
+drops the `Authorization` header. The browser extension sends the token only in `Authorization`.
 
 **Authentication:** `Authorization: Bearer <token>`, or `X-Identity-Api-Token: <token>` for servers
 that drop the `Authorization` header.
@@ -156,7 +180,7 @@ that drop the `Authorization` header.
 |---|---|---|
 | `GET /v1/me` | User, name, prefix, pattern, allowed domains, default domain, limits | 200 |
 | `GET /v1/identities[?shop=…]` | Generated identities, newest first, optionally for one shop | 200 `{"items": [...]}` |
-| `POST /v1/identities` | Create an address. JSON or form: `shop` (name or website address), optional `domain`, `name` | 201 + `Location` |
+| `POST /v1/identities` | Create an address. JSON or form: `shop` (name or website address), optional `url` (website address, if `shop` is empty), `domain`, `name` | 201 + `Location` |
 | `GET /v1/identities/{id}` | One generated identity | 200 |
 | `DELETE /v1/identities/{id}` | Delete a generated identity (Roundcube marks it deleted) | 204 |
 | `GET /v1/token` | Status of the token in use: created, renewed, last use, expiry, rotation due | 200 |
@@ -164,8 +188,8 @@ that drop the `Authorization` header.
 
 An identity looks like
 `{"id": 42, "email": "m-bookshop-2026-k3x9q2ab@example.org", "name": "…", "shop": "bookshop", "prefix": "m", "year": 2026, "changed": "2026-09-27T20:21:12Z"}`.
-Only identities that match the user's or the admin's pattern can be listed or deleted, never
-addresses the user entered by hand.
+Only identities created by the plugin (their ids are recorded) that still match the user's or the
+admin's pattern can be listed or deleted, never addresses the user entered by hand.
 
 **Errors** are [RFC 9457](https://www.rfc-editor.org/rfc/rfc9457) problem details
 (`application/problem+json`) with a machine readable `code`, e.g.
@@ -183,7 +207,8 @@ characters become `-`, at most `identity_api_shop_maxlength` characters. A websi
 (`https://checkout.gardenshop.example/kasse`) is accepted as shop too; the shop name is then derived from its
 host (`gardenshop`).
 
-**Token rotation.** Every authenticated response carries `Identity-Api-Token-Rotate: true|false` and
+**Token rotation.** Every authenticated response carries `Identity-Api-Token-Rotate: true|false` and,
+unless the token never expires (`identity_api_token_lifetime` = 0, or a token without rotation),
 `Identity-Api-Token-Expires: <time>`. On `true`, call `POST /v1/token/rotate` and switch to the
 returned token. The old token stays valid until the new one is used for the first time, so a lost
 response doesn't lock the client out; of several unused new tokens, the first one used wins. A token
@@ -247,11 +272,15 @@ Chrome on Android and iOS doesn't support extensions. On iPhone/iPad, see [docs/
 ### Setup
 
 * **One click:** with the extension installed, create a token in the Roundcube settings (see above)
-  and click **Connect browser extension**. The extension checks the token, asks for confirmation
-  (showing the account and the API URL) and stores both.
+  and click **Connect browser extension**. The extension checks the token and opens its own
+  confirmation page, which shows the server, the API URL and the account; only after *Verbinden* it
+  stores them.
+  * Any website could show such a button, so nothing is stored without that confirmation, and it
+    warns if the server or the account changes. Confirm only if you just clicked the button in your
+    webmail yourself.
   * The API URL must be on the same server as the settings page.
-  * It reacts to real clicks only, not to clicks triggered by scripts.
-* **Manually:** on the extension's options page, enter the API URL (`https://` required, except
+* **Manually:** on the extension's options page, enter the API URL shown in Roundcube under
+  *Connection* (e.g. `https://webmail.example.org/api/identity/`; `https://` required, except
   `localhost`) and the token, then click *Verbindung testen* (test connection) and save.
 
 ### Usage
@@ -262,8 +291,10 @@ The extension's user interface is currently German.
   `gardenshop`), the domain choice and the **existing addresses for this shop**. *Neue Adresse erzeugen*
   creates an identity and fills the field, including “repeat e-mail” fields.
 * **Toolbar popup** (on Firefox for Android in the menu under *Extensions*): the same functions. It
-  fills the focused field of the focused frame and also copies the address to the clipboard.
-* **Context menu** (desktop only): right-click an input field.
+  fills the focused field (otherwise the most likely e-mail field) and, unless switched off in the
+  options, copies the address to the clipboard.
+* **Context menu** (desktop only): right-click an input field. If the field can't be filled, the new
+  address is shown.
 
 The extension rotates its token automatically.
 
@@ -325,11 +356,13 @@ CI runs:
 
 ### Releases
 
-Pushing a version tag (`git tag 2.1 && git push origin 2.1`), or running *Actions → Release → Run
-workflow*, triggers the release workflow. It sets the extension version from the tag, runs all tests
-and publishes a GitHub release with the plugin archive and both extension packages. It also updates
-the Composer repository (`packages.json` in the latest release, listing the plugin archives of all
-releases).
+Running *Actions → Release → Run workflow* with a new version (e.g. `2.2`), or pushing such a tag,
+triggers the release workflow. It sets the extension version from the tag, runs the unit tests, the
+SQLite integration test and lint, and builds everything into a draft release. It then signs the
+Firefox extension, adds the Composer repository (`packages.json`, listing the plugin archives of all
+releases) and publishes the release. Running it again for a failed release continues the draft; a
+published release is never rebuilt, release a new version instead. The plugin archives are
+reproducible (same bytes for the same commit).
 
 Composer installs a package from the root of its source, so it can't install the plugin from this
 repository directly; the plugin archive has the plugin files at its root. This also rules out

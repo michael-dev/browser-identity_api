@@ -3,7 +3,7 @@
   "name": "Shop-Adressen für Roundcube",
   "short_name": "Shop-Adressen",
   "version": "1.0",
-  "description": "Erzeugt im Bestellformular on the fly eine shop-spezifische E-Mail-Adresse (<kürzel>-<shop>-<jahr>-<zufall>@domain) als Roundcube-Identität und fügt sie ein.",
+  "description": "Erzeugt im Bestellformular eine eigene E-Mail-Adresse pro Shop als Roundcube-Identität und fügt sie ein.",
   "homepage_url": "https://github.com/michael-dev/ff-rc-identity",
   "icons": {
     "16": "icons/icon-16.png",
@@ -18,7 +18,7 @@
       "strict_min_version": "140.0",
       "data_collection_permissions": {
         "required": [
-          "websiteActivity"
+          "browsingActivity"
         ]
       }
     },

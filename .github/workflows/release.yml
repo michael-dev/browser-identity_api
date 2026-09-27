@@ -1,15 +1,21 @@
 name: Release
 
-# Push a tag like "1.0", "1.2.3" or "v1.2.3" to build and publish a release.
-# Alternatively run it manually (Actions > Release > Run workflow): an existing
-# tag is rebuilt, a new tag is created on the selected branch's commit.
+# Run it manually (Actions > Release > Run workflow) with a tag like "2.2" or
+# "2.2.1" (created on the selected branch's commit), or push such a tag.
+#
+# Order: test and build -> draft GitHub release with all files -> sign on AMO
+# (the signed XPI goes into the draft right away) -> Composer repository ->
+# publish -> optional Chrome Web Store upload and deletion of old releases.
+# Running it again for the same tag (also "Re-run jobs") continues the draft;
+# a signed XPI that is already attached is not signed again. A published
+# release is never rebuilt: release a new version instead.
 on:
   push:
     tags: ['v[0-9]*', '[0-9]*']
   workflow_dispatch:
     inputs:
       tag:
-        description: 'Tag to build, e.g. 1.0 (created on the selected branch if missing)'
+        description: 'Version tag, e.g. 2.2 (created on the selected branch if missing)'
         required: true
       channel:
         description: 'AMO channel: listed = public on addons.mozilla.org, unlisted = signed file only'
@@ -17,47 +23,62 @@ on:
         options: [default, unlisted, listed]
         default: default
       delete_old_releases:
-        description: 'Delete all other releases and their tags (e.g. for a fresh start)'
+        description: 'Delete all other releases and their tags after publishing (fresh start)'
         type: boolean
         default: false
 
 permissions:
   contents: write
 
+# one release run at a time, so the Composer repository always lists every release
+concurrency:
+  group: release
+  cancel-in-progress: false
+
 jobs:
   release:
     runs-on: ubuntu-latest
     env:
       TAG: ${{ github.event.inputs.tag || github.ref_name }}
-      # Optional: AMO API credentials to sign the extension (unlisted channel).
-      # https://addons.mozilla.org/developers/addon/api/key/
-      AMO_JWT_ISSUER: ${{ secrets.AMO_JWT_ISSUER }}
-      AMO_JWT_SECRET: ${{ secrets.AMO_JWT_SECRET }}
       # Optional repository variable to override the add-on ID used for signing.
       GECKO_ID: ${{ vars.GECKO_ID }}
-      # Optional: Chrome Web Store API credentials to upload the Chrome variant.
-      # https://developer.chrome.com/docs/webstore/using-api
-      CWS_EXTENSION_ID: ${{ vars.CWS_EXTENSION_ID }}
-      CWS_CLIENT_ID: ${{ secrets.CWS_CLIENT_ID }}
-      CWS_CLIENT_SECRET: ${{ secrets.CWS_CLIENT_SECRET }}
-      CWS_REFRESH_TOKEN: ${{ secrets.CWS_REFRESH_TOKEN }}
       # "listed" publishes on addons.mozilla.org (with extension/amo/metadata.json), "unlisted"
       # only signs. Default from repository variable AMO_CHANNEL, else unlisted.
       AMO_CHANNEL: ${{ (github.event.inputs.channel != '' && github.event.inputs.channel != 'default') && github.event.inputs.channel || vars.AMO_CHANNEL || 'unlisted' }}
+      # Only flags here; the secrets themselves are passed to the steps that need them.
+      HAS_AMO: ${{ secrets.AMO_JWT_ISSUER != '' && secrets.AMO_JWT_SECRET != '' }}
+      HAS_CWS: ${{ vars.CWS_EXTENSION_ID != '' && secrets.CWS_CLIENT_ID != '' && secrets.CWS_CLIENT_SECRET != '' && secrets.CWS_REFRESH_TOKEN != '' }}
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          persist-credentials: false
 
-      - name: Check out existing tag
+      - name: Check tag and release state
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
+          # Firefox and Chrome accept 1-4 numbers without leading zeros, each at most 65535
+          VERSION="${TAG#v}"
+          if ! [[ "$VERSION" =~ ^(0|[1-9][0-9]{0,4})(\.(0|[1-9][0-9]{0,4})){0,3}$ ]]; then
+            echo "::error::Tag '$TAG' is not a valid version (e.g. 2.2 or 2.2.1)"; exit 1
+          fi
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+
+          state=$(gh release view "$TAG" --json isDraft -q 'if .isDraft then "draft" else "published" end' 2>/dev/null || echo none)
+          if [ "$state" = published ]; then
+            echo "::error::Release $TAG is already published. Release a new version instead."; exit 1
+          fi
+          echo "RELEASE_STATE=$state" >> "$GITHUB_ENV"
+
+          # the Composer repository is always built with the current tooling
+          cp scripts/composer-repo.js "$RUNNER_TEMP/composer-repo.js"
           if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
             git checkout -q "refs/tags/$TAG"
-            # manual run for an existing release: Mozilla signs every version only once
-            if [ "$GITHUB_EVENT_NAME" = workflow_dispatch ]; then echo "REBUILD=1" >> "$GITHUB_ENV"; fi
           else
             echo "Tag $TAG does not exist yet, it will be created on $(git rev-parse --short HEAD)"
           fi
+          echo "TARGET=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
 
       - uses: shivammathur/setup-php@v2
         with:
@@ -71,21 +92,15 @@ jobs:
 
       - name: Set version from tag
         run: |
-          export VERSION="${TAG#v}"
-          if ! [[ "$VERSION" =~ ^[0-9]+(\.[0-9]+){0,3}$ ]]; then
-            echo "::error::Tag '$TAG' is not a valid version (e.g. 1.0, 1.2.3)"; exit 1
-          fi
-          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
           node -e '
             const fs = require("fs");
-            for (const f of ["extension/manifest.json"]) {
-              const j = JSON.parse(fs.readFileSync(f, "utf8"));
-              j.version = process.env.VERSION;
-              if (process.env.GECKO_ID) {
-                j.browser_specific_settings.gecko.id = process.env.GECKO_ID;
-              }
-              fs.writeFileSync(f, JSON.stringify(j, null, 2) + "\n");
-            }'
+            const f = "extension/manifest.json";
+            const j = JSON.parse(fs.readFileSync(f, "utf8"));
+            j.version = process.env.VERSION;
+            if (process.env.GECKO_ID) {
+              j.browser_specific_settings.gecko.id = process.env.GECKO_ID;
+            }
+            fs.writeFileSync(f, JSON.stringify(j, null, 2) + "\n");'
 
       - name: Tests
         run: |
@@ -96,37 +111,114 @@ jobs:
       - name: Build
         run: make xpi chrome plugin
 
-      - name: Sign / publish extension on AMO
-        if: env.AMO_JWT_ISSUER != '' && env.AMO_JWT_SECRET != '' && env.REBUILD != '1'
+      - name: Draft release with all files
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
+          if [ "$RELEASE_STATE" = none ]; then
+            gh release create "$TAG" --draft --title "$VERSION" --notes "Release is being built." --target "$TARGET"
+          fi
+          gh release upload "$TAG" dist/*.xpi dist/*.zip dist/*.tar.gz --clobber
+
+      - name: Sign / publish extension on AMO
+        if: env.HAS_AMO == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          WEB_EXT_API_KEY: ${{ secrets.AMO_JWT_ISSUER }}
+          WEB_EXT_API_SECRET: ${{ secrets.AMO_JWT_SECRET }}
+        run: |
+          signed="shop-adressen-$VERSION-signed.xpi"
           case "$AMO_CHANNEL" in
             unlisted)
+              if gh release view "$TAG" --json assets -q '.assets[].name' | grep -qxF "$signed"; then
+                echo "$signed is already attached (earlier run), Mozilla signs every version only once"
+                exit 0
+              fi
               npx -y web-ext@10.7.0 sign --source-dir extension --ignore-files 'tests/**' 'amo/**' \
-                --channel unlisted --artifacts-dir dist/signed \
-                --api-key "$AMO_JWT_ISSUER" --api-secret "$AMO_JWT_SECRET"
-              mv dist/signed/*.xpi "dist/shop-adressen-$VERSION-signed.xpi"
-              rm -rf dist/signed
+                --channel unlisted --artifacts-dir dist/signed
+              mv dist/signed/*.xpi "dist/$signed"
+              gh release upload "$TAG" "dist/$signed"
               ;;
             listed)
+              if [ "$RELEASE_STATE" = draft ] || [ "$GITHUB_RUN_ATTEMPT" != 1 ]; then
+                echo "::warning::Not submitting again: an earlier run may already have submitted $VERSION to addons.mozilla.org"
+                exit 0
+              fi
               # Submit for review and don't wait: Mozilla publishes the version on
               # addons.mozilla.org once it is approved, Firefox updates it automatically.
               npx -y web-ext@10.7.0 sign --source-dir extension --ignore-files 'tests/**' 'amo/**' \
-                --channel listed --amo-metadata extension/amo/metadata.json --approval-timeout 0 \
-                --api-key "$AMO_JWT_ISSUER" --api-secret "$AMO_JWT_SECRET"
-              echo "AMO_LISTED=1" >> "$GITHUB_ENV"
+                --channel listed --amo-metadata extension/amo/metadata.json --approval-timeout 0
               ;;
             *)
               echo "::error::AMO_CHANNEL must be 'listed' or 'unlisted', got '$AMO_CHANNEL'"; exit 1
               ;;
           esac
 
-      - name: Upload to Chrome Web Store
-        if: env.CWS_EXTENSION_ID != '' && env.CWS_CLIENT_ID != '' && env.CWS_CLIENT_SECRET != '' && env.CWS_REFRESH_TOKEN != '' && env.REBUILD != '1'
+      # Composer can't install the plugin from the git repository (it lives in plugin/),
+      # so every release carries a Composer repository with the plugin archives of all
+      # releases. Its URL stays the same: https://github.com/<repo>/releases/latest/download
+      - name: Composer repository
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          npx -y chrome-webstore-upload-cli@3 upload --source "dist/shop-adressen-chrome-$VERSION.zip" \
+          mkdir -p composer
+          ARGS=("$TAG=dist/identity_api-$VERSION.zip")
+          for tag in $(gh release list --limit 200 --exclude-drafts --exclude-pre-releases --json tagName -q '.[].tagName'); do
+            [ "$tag" = "$TAG" ] && continue
+            # zip preferred (Composer can't extract tar archives on PHP < 8), old releases may only have tar.gz
+            names=$(gh release view "$tag" --json assets -q '.assets[].name')
+            for file in "identity_api-${tag#v}.zip" "identity_api-${tag#v}.tar.gz"; do
+              if grep -qxF "$file" <<<"$names"; then
+                gh release download "$tag" -p "$file" -D "composer/$tag"
+                ARGS+=("$tag=composer/$tag/$file")
+                break
+              fi
+            done
+          done
+          node "$RUNNER_TEMP/composer-repo.js" "https://github.com/$GITHUB_REPOSITORY/releases/download/{tag}/{file}" "${ARGS[@]}" > composer/packages.json
+          gh release upload "$TAG" composer/packages.json --clobber
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          assets=$(gh release view "$TAG" --json assets -q '.assets[].name')
+          AMO_URL="https://addons.mozilla.org/firefox/addon/$(node -p "require('./extension/amo/metadata.json').slug")/"
+          if [ "$HAS_AMO" = true ] && [ "$AMO_CHANNEL" = listed ]; then
+            XPI_NOTE="The extension was submitted to [addons.mozilla.org]($AMO_URL) and can be installed from there once Mozilla has approved this version."
+          elif grep -qxF "shop-adressen-$VERSION-signed.xpi" <<<"$assets"; then
+            XPI_NOTE="\`shop-adressen-$VERSION-signed.xpi\` is signed by Mozilla and installs in Firefox (desktop and Android)."
+          else
+            XPI_NOTE="The extension is **not signed** (no AMO credentials configured). It can only be loaded temporarily via about:debugging or in Firefox Developer Edition/Nightly."
+          fi
+          cat > notes.md <<NOTES
+          ## Downloads
+
+          * \`identity_api-$VERSION.zip\`, \`identity_api-$VERSION.tar.gz\`: Roundcube plugin, extract into \`plugins/\` (or install it with Composer, see the README)
+          * \`shop-adressen-$VERSION.xpi\`: Firefox extension, unsigned
+          * \`shop-adressen-chrome-$VERSION.zip\`: extension for Chrome, Edge, Brave, … (Chrome Web Store package, or unzip and "Load unpacked")
+
+          $XPI_NOTE
+
+          See the [README](https://github.com/$GITHUB_REPOSITORY/blob/$TAG/README.md) for setup and the [CHANGELOG](https://github.com/$GITHUB_REPOSITORY/blob/$TAG/CHANGELOG.md) for changes.
+
+          NOTES
+          gh api "repos/$GITHUB_REPOSITORY/releases/generate-notes" -f tag_name="$TAG" -f target_commitish="$TARGET" -q .body >> notes.md || true
+          gh release edit "$TAG" --draft=false --title "$VERSION" --notes-file notes.md
+
+      # after publishing: a store outage must not block the GitHub release
+      - name: Upload to Chrome Web Store
+        if: env.HAS_CWS == 'true'
+        continue-on-error: true
+        env:
+          CWS_EXTENSION_ID: ${{ vars.CWS_EXTENSION_ID }}
+          CWS_CLIENT_ID: ${{ secrets.CWS_CLIENT_ID }}
+          CWS_CLIENT_SECRET: ${{ secrets.CWS_CLIENT_SECRET }}
+          CWS_REFRESH_TOKEN: ${{ secrets.CWS_REFRESH_TOKEN }}
+        run: |
+          npx -y chrome-webstore-upload-cli@3.5.0 upload --source "dist/shop-adressen-chrome-$VERSION.zip" \
             --extension-id "$CWS_EXTENSION_ID" --client-id "$CWS_CLIENT_ID" \
             --client-secret "$CWS_CLIENT_SECRET" --refresh-token "$CWS_REFRESH_TOKEN" --auto-publish
-          echo "CWS_UPLOADED=1" >> "$GITHUB_ENV"
 
       - name: Delete other releases and tags
         if: github.event.inputs.delete_old_releases == 'true'
@@ -137,56 +229,5 @@ jobs:
             if [ "$tag" != "$TAG" ]; then gh release delete "$tag" --cleanup-tag --yes; fi
           done
           for tag in $(git tag -l); do
-            if [ "$tag" != "$TAG" ]; then git push -q origin ":refs/tags/$tag" || true; fi
+            if [ "$tag" != "$TAG" ]; then gh api -X DELETE "repos/$GITHUB_REPOSITORY/git/refs/tags/$tag" || true; fi
           done
-
-      - name: Publish GitHub release
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          AMO_URL="https://addons.mozilla.org/firefox/addon/$(node -p "require('./extension/amo/metadata.json').slug")/"
-          if [ -n "${AMO_LISTED:-}" ]; then
-            XPI_NOTE="The extension was submitted to [addons.mozilla.org]($AMO_URL) and can be installed from there once Mozilla has approved this version."
-          elif [ -f "dist/shop-adressen-$VERSION-signed.xpi" ]; then
-            XPI_NOTE="\`shop-adressen-$VERSION-signed.xpi\` is signed by Mozilla and installs in Firefox (desktop and Android)."
-          else
-            XPI_NOTE="The extension is **not signed** (no AMO credentials configured). It can only be loaded temporarily via about:debugging or in Firefox Developer Edition/Nightly."
-          fi
-          cat > notes.md <<NOTES
-          ## Downloads
-
-          * \`identity_api-$VERSION.tar.gz\`, \`identity_api-$VERSION.zip\`: Roundcube plugin, extract into \`plugins/\` (or install it with Composer, see the README)
-          * \`shop-adressen-$VERSION.xpi\`: Firefox extension, unsigned
-          * \`shop-adressen-chrome-$VERSION.zip\`: extension for Chrome, Edge, Brave, … (Chrome Web Store package, or unzip and "Load unpacked")${CWS_UPLOADED:+ – uploaded to the Chrome Web Store}
-
-          $XPI_NOTE
-
-          See the [README](https://github.com/$GITHUB_REPOSITORY/blob/$TAG/README.md) for setup and the [CHANGELOG](https://github.com/$GITHUB_REPOSITORY/blob/$TAG/CHANGELOG.md) for changes.
-          NOTES
-          if gh release view "$TAG" >/dev/null 2>&1; then
-            gh release upload "$TAG" dist/*.* --clobber
-          else
-            gh release create "$TAG" dist/*.* --title "$VERSION" --notes-file notes.md --generate-notes \
-              --target "$(git rev-parse HEAD)"
-          fi
-
-      # Composer can't install the plugin from the git repository (it lives in plugin/),
-      # so every release publishes a Composer repository with all plugin archives. Its
-      # URL stays the same: https://github.com/<repo>/releases/latest/download
-      - name: Publish Composer repository
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          mkdir -p composer
-          ARGS=()
-          for tag in $(gh release list --limit 200 --exclude-drafts --exclude-pre-releases --json tagName -q '.[].tagName'); do
-            # zip preferred (Composer can't extract tar archives on PHP < 8), older releases only have tar.gz
-            for file in "identity_api-${tag#v}.zip" "identity_api-${tag#v}.tar.gz"; do
-              if gh release download "$tag" -p "$file" -D "composer/$tag" 2>/dev/null; then
-                ARGS+=("$tag=composer/$tag/$file")
-                break
-              fi
-            done
-          done
-          node scripts/composer-repo.js "https://github.com/$GITHUB_REPOSITORY/releases/download/{tag}/{file}" "${ARGS[@]}" > composer/packages.json
-          gh release upload "$(gh release view --json tagName -q .tagName)" composer/packages.json --clobber

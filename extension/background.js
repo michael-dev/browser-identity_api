@@ -3,13 +3,19 @@
 
 const menus = browser.menus || browser.contextMenus; // not available on Android
 
+/** Page the request is about: the sender's tab, or the tab the popup names. */
 function tabUrl(msg, sender) {
-  return msg.url || (sender && sender.tab && sender.tab.url) || '';
+  if (sender && sender.tab) {
+    return sender.tab.url || ''; // content scripts can't choose another page
+  }
+  return msg.url || '';
 }
 
-async function suggestShop(url, settings) {
+const own = (obj, key) => Object.prototype.hasOwnProperty.call(obj || {}, key);
+
+function suggestShop(url, settings) {
   const key = RcShop.siteKey(url);
-  return (key && settings.overrides[key]) || RcShop.shopFromUrl(url);
+  return (key && own(settings.overrides, key) && settings.overrides[key]) || RcShop.shopFromUrl(url);
 }
 
 /** Everything a UI needs to show: suggestion, domains, existing addresses. */
@@ -68,14 +74,16 @@ async function create(shop, domain, url) {
 }
 
 async function list(shop) {
-  return RcApi.list(String(shop || '').trim());
+  shop = String(shop || '').trim();
+  return shop ? RcApi.list(shop) : [];
 }
 
 const MAX_LEARNED_PER_SITE = 20;
 
 async function learnedFields(url) {
   const { learnedFields: all } = await browser.storage.local.get({ learnedFields: {} });
-  return all[RcShop.siteKey(url)] || [];
+  const key = RcShop.siteKey(url);
+  return (own(all, key) && Array.isArray(all[key])) ? all[key] : [];
 }
 
 async function learnField(url, sig) {
@@ -84,7 +92,7 @@ async function learnField(url, sig) {
     return false;
   }
   const { learnedFields: all } = await browser.storage.local.get({ learnedFields: {} });
-  const list = (all[key] || []).filter((s) => s !== sig);
+  const list = (own(all, key) && Array.isArray(all[key]) ? all[key] : []).filter((s) => s !== sig);
   all[key] = [...list, sig].slice(-MAX_LEARNED_PER_SITE);
   await browser.storage.local.set({ learnedFields: all });
   return true;
@@ -101,14 +109,14 @@ async function uiSettings() {
 }
 
 /**
- * API URL for the "connect" button: the API path given by the page, resolved
- * against the address of the page the click happened on, and only on the same
- * server and from a Roundcube settings page. The token is verified against
- * exactly that URL and the confirmation names account and URL, so another
- * website can't point the extension to a server of its choice.
+ * "Connect" button in the Roundcube settings. Any website can show such a
+ * button, so the page only makes an offer: the API URL (resolved against the
+ * page, same server only) and the token are checked, and the user confirms
+ * them in the extension's own page connect/connect.html, which shows the
+ * server prominently. Nothing is stored before that confirmation.
  */
 function connectUrl(sender, api) {
-  const page = sender && sender.url ? new URL(sender.url) : null;
+  const page = sender && sender.tab && sender.url ? new URL(sender.url) : null;
   // after saving, Roundcube shows the settings as POST response to "./" (no _task in the URL)
   const task = page ? page.searchParams.get('_task') : null;
   if (!page || (task !== null && task !== 'settings')) {
@@ -121,23 +129,85 @@ function connectUrl(sender, api) {
   return RcApi.normalizeBaseUrl(url.toString());
 }
 
-async function connectCheck(token, api, sender) {
+// offers wait for the confirmation in storage.session (not readable by content
+// scripts, survives the end of a Chromium service worker), else in memory
+const OFFER_TTL = 10 * 60 * 1000;
+const offers = new Map();
+const session = browser.storage && browser.storage.session;
+
+async function putOffer(id, offer) {
+  if (session) {
+    await session.set({ ['offer:' + id]: offer });
+  } else {
+    offers.set(id, offer);
+  }
+}
+
+async function takeOffer(id, remove) {
+  const key = 'offer:' + id;
+  let offer = session ? (await session.get(key))[key] : offers.get(id);
+  if (remove || (offer && offer.created < Date.now() - OFFER_TTL)) {
+    if (session) await session.remove(key); else offers.delete(id);
+    offer = remove ? offer : null;
+  }
+  return offer && offer.created >= Date.now() - OFFER_TTL ? offer : null;
+}
+
+function randomId() {
+  return Array.from(crypto.getRandomValues(new Uint8Array(16)), (b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+async function connectOffer(token, api, sender) {
   const apiUrl = connectUrl(sender, api);
+  if (typeof token !== 'string' || !/^\d+\.[0-9a-f]{8}\.[\w-]{20,}$/.test(token)) {
+    throw new Error('Ungültiges Token.');
+  }
   const current = await RcApi.getSettings();
   const info = await RcApi.info(Object.assign({}, current, { apiUrl, token }), { rotate: false });
+  const id = randomId();
+  await putOffer(id, { apiUrl, token, user: String(info.user || ''), created: Date.now() });
+  await browser.tabs.create({ url: browser.runtime.getURL('connect/connect.html') + '#' + id });
+  return true;
+}
+
+const CONNECT_PAGE = browser.runtime.getURL('connect/connect.html');
+const fromConnectPage = (sender) => Boolean(sender && typeof sender.url === 'string' && sender.url.startsWith(CONNECT_PAGE));
+
+async function connectDetails(id, sender) {
+  if (!fromConnectPage(sender)) {
+    throw new Error('not allowed');
+  }
+  const offer = await takeOffer(id, false);
+  if (!offer) {
+    throw new Error('Die Anfrage ist abgelaufen. Bitte in Roundcube erneut „Mit Browser-Erweiterung verbinden“ wählen.');
+  }
+  const current = await RcApi.getSettings();
+  const connected = Boolean(current.apiUrl && current.token);
   return {
-    url: apiUrl,
-    user: info.user,
-    previousUrl: current.apiUrl && current.token ? current.apiUrl : '',
+    url: offer.apiUrl,
+    user: offer.user,
+    previousUrl: connected ? current.apiUrl : '',
+    previousUser: connected ? current.connectedUser : '',
   };
 }
 
-async function connect(token, api, sender) {
-  const apiUrl = connectUrl(sender, api);
-  const settings = Object.assign({}, await RcApi.getSettings(), { apiUrl, token });
-  const info = await RcApi.info(settings, { rotate: false }); // only store working credentials
-  await browser.storage.local.set({ apiUrl, token, pendingToken: '' });
-  return { url: apiUrl, user: info.user };
+async function connectConfirm(id, sender) {
+  if (!fromConnectPage(sender)) {
+    throw new Error('not allowed');
+  }
+  const offer = await takeOffer(id, true);
+  if (!offer) {
+    throw new Error('Die Anfrage ist abgelaufen. Bitte in Roundcube erneut „Mit Browser-Erweiterung verbinden“ wählen.');
+  }
+  await browser.storage.local.set({ apiUrl: offer.apiUrl, token: offer.token, pending: null, connectedUser: offer.user });
+  return { url: offer.apiUrl, user: offer.user };
+}
+
+async function connectCancel(id, sender) {
+  if (fromConnectPage(sender)) {
+    await takeOffer(id, true);
+  }
+  return true;
 }
 
 // Wrap results so errors survive messaging as plain data.
@@ -162,10 +232,14 @@ rcidOnMessage((msg, sender) => {
       return wrap(learnedFields(tabUrl({}, sender)));
     case 'learnField':
       return wrap(learnField(tabUrl({}, sender), msg.signature));
-    case 'connectCheck':
-      return wrap(connectCheck(msg.token, msg.api, sender));
-    case 'connect':
-      return wrap(connect(msg.token, msg.api, sender));
+    case 'connectOffer':
+      return wrap(connectOffer(msg.token, msg.api, sender));
+    case 'connectDetails':
+      return wrap(connectDetails(msg.id, sender));
+    case 'connectConfirm':
+      return wrap(connectConfirm(msg.id, sender));
+    case 'connectCancel':
+      return wrap(connectCancel(msg.id, sender));
     case 'openOptions':
       return wrap(browser.runtime.openOptionsPage());
   }
@@ -177,7 +251,8 @@ rcidOnMessage((msg, sender) => {
 
 if (menus) {
   browser.runtime.onInstalled.addListener(() => {
-    menus.removeAll().then(() => {
+    // Chromium before 123 returns no Promise here
+    Promise.resolve(menus.removeAll()).then(() => {
       menus.create({ id: 'rcid-create', title: 'Neue Shop-Adresse erzeugen und einfügen', contexts: ['editable'] });
       menus.create({ id: 'rcid-panel', title: 'Shop-Adresse auswählen …', contexts: ['editable'] });
     });
@@ -193,9 +268,18 @@ if (menus) {
       if (info.menuItemId !== 'rcid-create') {
         return;
       }
+      // only create an address if the frame can take it (no content script on some pages)
+      const alive = await browser.tabs.sendMessage(tab.id, { type: 'ping' }, target).catch(() => false);
+      if (!alive) {
+        return;
+      }
       const settings = await RcApi.getSettings();
-      const identity = await create(await suggestShop(tab.url, settings), settings.defaultDomain, tab.url);
-      await browser.tabs.sendMessage(tab.id, { type: 'fill', email: identity.email, targetElementId: info.targetElementId }, target);
+      const identity = await create(suggestShop(tab.url, settings), '', tab.url);
+      const res = await browser.tabs.sendMessage(tab.id,
+        { type: 'fill', email: identity.email, mode: 'context', targetElementId: info.targetElementId }, target);
+      if (!res || !res.filled) {
+        await browser.tabs.sendMessage(tab.id, { type: 'notify', text: `Neue Adresse ${identity.email} – kein Feld zum Einfügen gefunden.` }, target);
+      }
     } catch (e) {
       await browser.tabs.sendMessage(tab.id, { type: 'notify', text: e.message }, target).catch(() => {});
     }

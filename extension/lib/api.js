@@ -9,7 +9,8 @@
     inlineButton: true,
     fillConfirm: true,
     copyToClipboard: true,
-    pendingToken: '', // rotated token not yet confirmed, see doRotate()
+    pending: null, // { apiUrl, base, token }: rotated token not yet confirmed, see doRotate()
+    connectedUser: '', // account of the last "connect" from the Roundcube settings
     overrides: {}, // siteKey -> shop name chosen by the user
     learnedFields: {}, // siteKey -> ["name:foo", "id:bar"], unrecognized e-mail fields filled by the user
   };
@@ -20,7 +21,7 @@
     constructor(message, status, code) {
       super(message);
       this.status = status || 0;
-      this.code = code || ''; // error string of the server, e.g. "domain not allowed"
+      this.code = code || ''; // machine readable error code of the server, e.g. "domain_not_allowed"
     }
   }
 
@@ -28,7 +29,7 @@
     return browser.storage.local.get(DEFAULTS);
   }
 
-  /** "https://webmail.example.org/?_task=mail#x" -> "https://webmail.example.org/" */
+  /** "https://webmail.example.org/api/identity?x#y" -> "https://webmail.example.org/api/identity/" */
   function normalizeBaseUrl(url) {
     url = String(url || '').trim();
     if (!url) {
@@ -70,7 +71,12 @@
     identity_limit_reached: 'Maximale Anzahl an Identitäten erreicht.',
     rate_limit_exceeded: 'Zu viele neue Adressen in kurzer Zeit. Bitte später erneut versuchen.',
     address_too_long: 'Adresse zu lang. Bitte einen kürzeren Shop-Namen verwenden.',
-    identities_disabled: 'Der Server erlaubt keine zusätzlichen Identitäten.',
+    identities_disabled: 'Zusätzliche Identitäten sind auf diesem Server nicht erlaubt.',
+    not_found: 'Nicht gefunden (Adresse gelöscht oder falsche API-URL).',
+    delete_failed: 'Die Adresse konnte nicht gelöscht werden.',
+    static_token: 'Dieses Token wird nicht erneuert.',
+    no_domain_configured: 'Auf dem Server ist keine Domain für neue Adressen eingerichtet.',
+    saving_failed: 'Speichern auf dem Server fehlgeschlagen.',
   };
 
   /** The token must never travel unencrypted (localhost excepted, for testing). */
@@ -103,29 +109,33 @@
     }
 
     let res;
+    let data = null;
     try {
-      res = await fetch(endpoint(settings.apiUrl, path, params), init);
-    } catch (e) {
-      throw new ApiError(e.name === 'AbortError'
-        ? 'Zeitüberschreitung beim Webmail-Server.'
-        : 'Webmail-Server nicht erreichbar (' + e.message + ').');
+      try {
+        res = await fetch(endpoint(settings.apiUrl, path, params), init);
+      } catch (e) {
+        throw new ApiError(e.name === 'AbortError'
+          ? 'Zeitüberschreitung beim Webmail-Server.'
+          : 'Webmail-Server nicht erreichbar (' + e.message + ').');
+      }
+      if (res.status !== 204) {
+        try {
+          data = await res.json(); // the timeout covers the body too
+        } catch (e) {
+          throw new ApiError(e.name === 'AbortError'
+            ? 'Zeitüberschreitung beim Webmail-Server.'
+            : 'Keine gültige API-Antwort (HTTP ' + res.status + '). Stimmt die API-URL (wie in Roundcube unter Einstellungen → Einstellungen → Shop-Adressen-API angezeigt)?', res.status);
+        }
+      }
     } finally {
       clearTimeout(timer);
     }
 
-    let data = null;
-    if (res.status !== 204) {
-      try {
-        data = await res.json();
-      } catch (e) {
-        throw new ApiError('Keine gültige API-Antwort (HTTP ' + res.status + '). Stimmt die API-URL (wie in Roundcube unter Einstellungen → Shop-Adressen-API angezeigt)?', res.status);
-      }
-    }
-
     if (!res.ok) {
       // RFC 9457 problem details with a machine readable "code"
-      const code = (data && data.code) || ('http_' + res.status);
-      throw new ApiError(ERRORS[code] || ('Serverfehler: ' + ((data && data.detail) || code)), res.status, code);
+      const code = (data && typeof data.code === 'string' && data.code) || ('http_' + res.status);
+      const text = Object.prototype.hasOwnProperty.call(ERRORS, code) ? ERRORS[code] : 'Serverfehler: ' + ((data && data.detail) || code);
+      throw new ApiError(text, res.status, code);
     }
 
     return { data, rotate: res.headers.get('Identity-Api-Token-Rotate') === 'true' };
@@ -152,14 +162,17 @@
       if (latest.apiUrl !== settings.apiUrl) {
         throw e;
       }
+      const pending = latest.pending;
       if (latest.token && latest.token !== settings.token) {
         // a rotation replaced the token while this request was running
         settings = latest;
-      } else if (latest.pendingToken) {
+      } else if (pending && pending.apiUrl === latest.apiUrl && pending.base === latest.token && pending.token) {
         // a rotation was interrupted after the server switched to the new token
-        settings = Object.assign({}, latest, { token: latest.pendingToken });
+        settings = Object.assign({}, latest, { token: pending.token });
         res = await request(path, { method, params, body, settings });
-        await browser.storage.local.set({ token: settings.token, pendingToken: '' });
+        if (sameConnection(await getSettings(), latest)) {
+          await browser.storage.local.set({ token: pending.token, pending: null });
+        }
         return res.data;
       } else {
         throw e;
@@ -189,12 +202,16 @@
     }
     const { data } = await request('/v1/token/rotate', { method: 'POST', settings: current });
     // keep the new token before the server switches to it: if the browser stops
-    // in between, the next 401 falls back to it (see call())
-    await browser.storage.local.set({ pendingToken: data.token });
+    // in between, the next 401 falls back to it (see call()); only for this
+    // server and this old token
+    if (!sameConnection(await getSettings(), current)) {
+      return;
+    }
+    await browser.storage.local.set({ pending: { apiUrl: current.apiUrl, base: current.token, token: data.token } });
     // first use of the new token makes it the current one on the server
     await request('/v1/token', { settings: Object.assign({}, current, { token: data.token }) });
     if (sameConnection(await getSettings(), current)) {
-      await browser.storage.local.set({ token: data.token, pendingToken: '' });
+      await browser.storage.local.set({ token: data.token, pending: null });
     }
   }
 

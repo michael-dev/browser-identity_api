@@ -2,15 +2,17 @@
 
 **Deutsch**
 
-Die Firefox-Erweiterung „Shop-Adressen für Roundcube“ kommuniziert ausschließlich mit dem
-Roundcube-Webmail-Server, dessen Adresse du in den Einstellungen der Erweiterung einträgst.
+Die Browser-Erweiterung „Shop-Adressen für Roundcube“ (Firefox und Chromium-Browser) kommuniziert
+ausschließlich mit dem Roundcube-Server, dessen API-URL du in den Einstellungen der Erweiterung
+einträgst oder per „Mit Browser-Erweiterung verbinden“ übernimmst.
 
-* **Übertragen wird:** dein API-Token (zur Anmeldung) und der Shop-Name, für den eine Adresse
-  erzeugt oder aufgelistet werden soll. Der Shop-Name wird aus der Domain der aktuellen Website
+* **Übertragen wird:** dein API-Token (zur Anmeldung), der Shop-Name, für den eine Adresse
+  erzeugt oder aufgelistet werden soll, und ggf. die gewählte Domain. Der Shop-Name wird aus der Domain der aktuellen Website
   abgeleitet (z. B. `gardenshop.example` → `gardenshop`) und kann vorher geändert werden.
 * **Empfangen wird:** die erzeugte bzw. vorhandene E-Mail-Adresse.
-* **Lokal gespeichert** (nur im Browser, nicht synchronisiert): API-URL, Token, Einstellungen und
-  die von dir geänderten Shop-Namen pro Website.
+* **Lokal gespeichert** (nur im Browser, nicht synchronisiert): API-URL, Token, Kontoname,
+  Einstellungen, die von dir geänderten Shop-Namen pro Website und die gemerkten E-Mail-Felder
+  (Website und Name bzw. ID des Feldes).
 * Es gibt keine Statistik, kein Tracking und keine Übertragung an den Entwickler oder an Dritte.
   Seiteninhalte werden nur lokal ausgewertet, um E-Mail-Felder zu erkennen und auszufüllen.
 
@@ -18,8 +20,10 @@ Verantwortlich für die Daten auf dem Server ist der Betreiber des jeweiligen Ro
 
 **English**
 
-The extension only communicates with the Roundcube webmail server configured by the user. It sends
-the API token and the shop name (derived from the current website's domain, editable) and receives
-the generated e-mail address. Settings are stored locally in the browser and are not synced. There is
+The browser extension (Firefox and Chromium based browsers) only communicates with the Roundcube
+server whose API URL the user configured. It sends the API token, the shop name (derived from the
+current website's domain, editable) and the chosen domain, and receives the generated e-mail
+address. Settings, the account name, shop names you changed and remembered e-mail fields (website
+plus field name/id) are stored locally in the browser and are not synced. There is
 no analytics or tracking and no data is sent to the developer or any third party. Page content is only
 processed locally to detect and fill e-mail fields.

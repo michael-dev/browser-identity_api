@@ -6,6 +6,11 @@ const path = require('path');
 
 const src = path.join(__dirname, '..', 'extension');
 const out = path.resolve(process.argv[2] || path.join(__dirname, '..', 'dist', 'chrome'));
+// the output directory is deleted first: refuse anything containing the sources
+if (path.relative(out, src) === '' || !path.relative(out, src).startsWith('..')) {
+  console.error(`refusing to replace ${out}, it contains the extension sources`);
+  process.exit(2);
+}
 fs.rmSync(out, { recursive: true, force: true });
 fs.cpSync(src, out, { recursive: true, filter: (p) => !/^(tests|amo)([\\/]|$)/.test(path.relative(src, p)) });
 

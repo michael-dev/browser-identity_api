@@ -9,6 +9,11 @@ on:
 permissions:
   contents: read
 
+# a newer push to the same branch makes older runs obsolete
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   plugin:
     name: Roundcube ${{ matrix.roundcube }} / PHP ${{ matrix.php }}
@@ -30,7 +35,7 @@ jobs:
           tools: composer
 
       - name: Syntax check
-        run: for f in plugin/*.php plugin/lib/*.php plugin/localization/*.inc plugin/config.inc.php.dist; do php -l "$f"; done
+        run: for f in plugin/*.php plugin/lib/*.php plugin/localization/*.inc plugin/config.inc.php.dist plugin/tests/*.php tests/*.php; do php -l "$f"; done
 
       - name: Unit tests
         run: php plugin/tests/generator_test.php
@@ -49,6 +54,18 @@ jobs:
         env:
           RC_VERSION: ${{ matrix.roundcube }}
           E2E: 1
+          WORK: ${{ runner.temp }}/it
+
+      - name: Upload logs and screenshots of a failed test
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: integration-${{ matrix.roundcube }}
+          path: |
+            ${{ runner.temp }}/it/*.log
+            ${{ runner.temp }}/it/*.png
+            ${{ runner.temp }}/it/roundcubemail-*/logs/
+          if-no-files-found: ignore
 
       - name: Install the plugin archive with Composer
         run: make composer-test
@@ -114,12 +131,20 @@ jobs:
           FPM: /usr/sbin/php-fpm8.3
           PORT: 8089
 
-      - name: Integration test through Apache with the README rule
+      - name: Integration test through Apache with the README rule (Roundcube 1.6 .htaccess)
         run: make integration-test
         env:
           WEB: apache
           FPM: /usr/sbin/php-fpm8.3
           PORT: 8090
+
+      - name: Integration test through Apache with the README rule (Roundcube 1.7 public_html)
+        run: make integration-test
+        env:
+          WEB: apache
+          FPM: /usr/sbin/php-fpm8.3
+          PORT: 8091
+          RC_VERSION: 1.7.4
 
   postfix-guide:
     name: Postfix guide (postmap + triggers)
@@ -164,5 +189,5 @@ jobs:
       - name: Lint
         run: make lint
 
-      - name: Build Chrome variant
-        run: make chrome
+      - name: Build all packages
+        run: make xpi chrome plugin

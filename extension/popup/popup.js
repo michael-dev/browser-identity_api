@@ -28,17 +28,26 @@ async function copy(text) {
   }
 }
 
-/** Frame that has the focused element (the top frame only "sees" the iframe element). */
+/**
+ * Frame that has the focused element. Frames keep their activeElement when
+ * the focus leaves them, so a subframe only counts if the top frame's focus
+ * is on a frame element (otherwise the user moved on to the top page).
+ */
 async function focusedFrameId() {
   try {
     const results = await browser.scripting.executeScript({
       target: { tabId: tab.id, allFrames: true },
       func: () => {
         const a = document.activeElement;
-        return Boolean(a && a !== document.body && a !== document.documentElement && !/^(IFRAME|FRAME)$/.test(a.tagName));
+        if (!a || a === document.body || a === document.documentElement) return 'none';
+        return /^(IFRAME|FRAME)$/.test(a.tagName) ? 'frame' : 'field';
       },
     });
-    const hit = results.find((r) => r.result);
+    const top = results.find((r) => r.frameId === 0);
+    if (!top || top.result !== 'frame') {
+      return 0;
+    }
+    const hit = results.find((r) => r.frameId !== 0 && r.result === 'field');
     return hit ? hit.frameId : 0;
   } catch (e) {
     return 0;

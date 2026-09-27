@@ -68,7 +68,10 @@ async function save(e) {
     status('save-status', 'Die API-URL muss mit https:// beginnen, sonst würde das Token unverschlüsselt übertragen.', 'error');
     return;
   }
-  await browser.storage.local.set(Object.assign({ pendingToken: '' }, s));
+  // a pending rotated token belongs to the old connection only
+  const old = await RcApi.getSettings();
+  const changed = old.apiUrl !== s.apiUrl || old.token !== s.token;
+  await browser.storage.local.set(Object.assign(changed ? { pending: null, connectedUser: '' } : {}, s));
   $('apiUrl').value = s.apiUrl;
   status('save-status', 'Gespeichert.', 'ok');
   test();

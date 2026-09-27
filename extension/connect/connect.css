@@ -1,0 +1,7 @@
+.host { font-size: 24px; font-weight: 700; word-break: break-all; margin: 0 0 8px; }
+.hint { color: var(--muted); font-size: 14px; word-break: break-all; }
+.warning { background: var(--warn); border-radius: 6px; padding: 10px; }
+.buttons { display: flex; gap: 10px; margin-top: 16px; }
+button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+.ok { color: var(--ok); }
+.error { color: var(--error); }

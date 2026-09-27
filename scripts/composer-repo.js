@@ -30,6 +30,10 @@ for (const arg of archives) {
     throw new Error(`invalid argument ${arg}`);
   }
 
+  if (versions[version]) {
+    throw new Error(`version ${version} given twice (${arg})`);
+  }
+
   // zip preferred: Composer can't extract tar archives on PHP < 8
   const zip = file.endsWith('.zip');
 

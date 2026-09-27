@@ -24,6 +24,7 @@ test('shop from url', () => {
   assert.strictEqual(shop.shopFromUrl('https://www.bücherstube.example/'), 'buecherstube');
   assert.strictEqual(shop.shopFromUrl('https://www.gärtnerei-grün.example/'), 'gaertnerei-gruen');
   assert.strictEqual(shop.shopFromUrl('https://xn--mnchen-3ya.de/'), 'muenchen');
+  assert.strictEqual(shop.shopFromUrl('https://bookshop.myshopify.com/cart'), 'bookshop');
   assert.strictEqual(shop.shopFromUrl('http://192.168.1.10/shop'), '');
   assert.strictEqual(shop.shopFromUrl('about:blank'), '');
   assert.strictEqual(shop.shopFromUrl('not a url'), '');
@@ -33,4 +34,5 @@ test('site key', () => {
   assert.strictEqual(shop.siteKey('https://checkout.gardenshop.example/x'), 'gardenshop.example');
   assert.strictEqual(shop.siteKey('https://www.example-tea.co.uk/'), 'example-tea.co.uk');
   assert.strictEqual(shop.siteKey('http://localhost:8080/'), 'localhost');
+  assert.strictEqual(shop.siteKey('https://bookshop.myshopify.com/'), 'bookshop.myshopify.com');
 });
