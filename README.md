@@ -64,6 +64,8 @@ $config['plugins'][] = 'identity_api';
 Optional: copy `plugins/identity_api/config.inc.php.dist` to `config.inc.php` and adjust it (the
 Composer installer creates it automatically).
 
+Set up the **rewrite rule** for the API URL in the web server, see [REST API](#rest-api).
+
 List `identity_api` **after** plugins that restrict access in their `startup` hook (IP filters,
 maintenance mode), because API requests end in this plugin's `startup` hook.
 
@@ -73,6 +75,7 @@ maintenance mode), because API requests end in this plugin's `startup` hook.
 |---|---|---|
 | `identity_api_template` | `{prefix}-{shop}-{year}-{random}` | Default pattern for new addresses (users can set their own). Placeholders: `{prefix}`, `{shop}`, `{year}`, `{random}` (`{shop}` and `{random}` are required). |
 | `identity_api_default_prefix` | `''` | Default for `{prefix}`. Empty: first letter of the username (`michael@…` → `m`). |
+| `identity_api_url` | `'api/identity/'` | URL of the REST API, relative to Roundcube's URL or absolute. The web server maps it to Roundcube with a rewrite rule (see [REST API](#rest-api)). |
 | `identity_api_domains` | `[]` | Default domains if a user hasn't configured any. The first one is the default. The placeholders `%n`, `%t` and `%d` (e.g. `%d`: `webmail.example.org` → `example.org`) come from the Host header and are only used if Roundcube's `trusted_host_patterns` is set. Empty: domain of the user's default identity. |
 | `identity_api_allowed_domains` | `[]` | Restricts the domains users may configure, e.g. `['example.org', '*.example.org']`. Empty: any domain (like `identities_level` 0). |
 | `identity_api_random_length` | `8` | Length of `{random}` |
@@ -98,7 +101,7 @@ then applies.
 
 * **New shop address:** create an address for a shop name or website (`gardenshop.example` → `gardenshop`) and copy
   it, or list the existing ones. This works in any browser, e.g. on an iPhone.
-* **Connection:** the webmail URL to use in the extension. After creating a token (see *Create
+* **Connection:** the API URL to use in the extension. After creating a token (see *Create
   token*), it is shown here **once**, together with a **Connect browser extension** button.
 * **Addresses:** the **pattern** (e.g. `{prefix}.{shop}.{random}` without the year; empty = admin
   pattern), a personal **prefix** (letters and digits; empty = default) and **domains**, one per
@@ -117,31 +120,34 @@ Deleting an identity (in the Roundcube settings or through the API) marks it as 
 The plugin offers a versioned REST API (v1) that other systems can use too. The complete description
 is in [`docs/openapi.yaml`](docs/openapi.yaml) (OpenAPI 3.1), so you can generate clients from it.
 
-**Base URL.** Roundcube has no URL routing, so resources go into the `_path` query parameter:
+**Base URL.** The API lives below `<roundcube-url>/api/identity/`, e.g.
 
 ```
-https://webmail.example.org/?_task=identity_api&_path=/v1/identities
-https://webmail.example.org/?_task=identity_api&_path=/v1/identities&shop=gardenshop
+https://webmail.example.org/api/identity/v1/identities
+https://webmail.example.org/api/identity/v1/identities?shop=gardenshop
 ```
 
-Further query parameters follow with `&`. A `?` inside `_path` is accepted as well, as some OpenAPI
-client generators produce it.
-
-For pretty URLs (`https://webmail.example.org/api/identity/v1/identities`), add a rewrite rule. These
-are untested examples; adapt them to your setup:
+**Rewrite rule (required).** Roundcube has no URL routing, so the web server has to pass these URLs
+to Roundcube. For Roundcube at the root of its host:
 
 ```nginx
-# nginx, in the server block of Roundcube
+# nginx, in the server block of Roundcube, before the location for PHP
 location ^~ /api/identity/ {
     rewrite ^/api/identity(/.*)$ /index.php?_task=identity_api&_path=$1 last;
 }
 ```
 
 ```apache
-# Apache (.htaccess or vhost of Roundcube's document root)
+# Apache, in <Directory> of Roundcube's document root or its .htaccess
 RewriteEngine On
 RewriteRule ^api/identity(/.*)$ index.php?_task=identity_api&_path=$1 [QSA,L]
+# pass the "Authorization" header to PHP-FPM / FastCGI
+CGIPassAuth On
 ```
+
+Both rules are tested in CI with PHP-FPM. For Roundcube in a subdirectory (e.g. `/roundcube/`), adjust
+the paths. For another location of the API, set `identity_api_url`. The settings page shows the API
+URL and warns if the API doesn't answer there.
 
 **Authentication:** `Authorization: Bearer <token>`, or `X-Identity-Api-Token: <token>` for servers
 that drop the `Authorization` header.
@@ -168,7 +174,7 @@ addresses the user entered by hand.
 
 ```bash
 curl -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
-     -d '{"shop":"Gärtnerei Grün"}' 'https://webmail.example.org/?_task=identity_api&_path=/v1/identities'
+     -d '{"shop":"Gärtnerei Grün"}' 'https://webmail.example.org/api/identity/v1/identities'
 # 201 {"id":42,"email":"m-gaertnerei-gruen-2026-2zw1w368@example.org","shop":"gaertnerei-gruen",...}
 ```
 
@@ -242,10 +248,10 @@ Chrome on Android and iOS doesn't support extensions. On iPhone/iPad, see [docs/
 
 * **One click:** with the extension installed, create a token in the Roundcube settings (see above)
   and click **Connect browser extension**. The extension checks the token, asks for confirmation
-  (showing the account and the webmail URL) and stores both.
-  * The webmail URL is taken from the address of the settings page, never from the page content.
+  (showing the account and the API URL) and stores both.
+  * The API URL must be on the same server as the settings page.
   * It reacts to real clicks only, not to clicks triggered by scripts.
-* **Manually:** on the extension's options page, enter the webmail URL (`https://` required, except
+* **Manually:** on the extension's options page, enter the API URL (`https://` required, except
   `localhost`) and the token, then click *Verbindung testen* (test connection) and save.
 
 ### Usage
@@ -298,6 +304,7 @@ make integration-test   # downloads Roundcube (RC_VERSION, default 1.6.19) and r
                         # tests the API over HTTP, the settings hooks and the extension's API client
 E2E=1 make integration-test  # additionally the real Chrome extension in Chromium (needs python3 and Playwright)
                         # Playwright: npm install --no-save playwright && npx playwright install chromium
+WEB=nginx make integration-test  # through nginx or Apache (WEB=apache) with PHP-FPM and the README rewrite rule
 DB=mysql make integration-test  # on MySQL/MariaDB instead (MYSQL_HOST, MYSQL_PORT, MYSQL_USER, MYSQL_PASSWORD, MYSQL_DATABASE)
 make composer-test      # installs the plugin archive with Composer into Roundcube
 make postfix-test       # checks docs/postfix.md with postmap and the triggers (MYSQL_HOST, MYSQL_PORT, MYSQL_ROOT_PASSWORD)
@@ -311,6 +318,7 @@ make xpi chrome plugin  # builds into dist/, see below
 CI runs:
 * the integration test with SQLite on Roundcube 1.5/PHP 7.3, 1.6/PHP 8.1 and 1.7/PHP 8.4, each
   including the end-to-end test of the Chrome extension and the Composer install,
+* the integration test through nginx and Apache with the rewrite rules from this README,
 * the integration test on MariaDB,
 * the Postfix guide test with a real `postmap`,
 * lint and unit tests of the extension.

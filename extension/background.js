@@ -101,24 +101,28 @@ async function uiSettings() {
 }
 
 /**
- * Webmail URL for the "connect" button: always derived from the address of
- * the page the click happened on (never from page data), and only from a
- * Roundcube settings page. The token is verified against exactly that server
- * and the confirmation names account and URL, so another website can't point
- * the extension to a server of its choice without the user seeing it.
+ * API URL for the "connect" button: the API path given by the page, resolved
+ * against the address of the page the click happened on, and only on the same
+ * server and from a Roundcube settings page. The token is verified against
+ * exactly that URL and the confirmation names account and URL, so another
+ * website can't point the extension to a server of its choice.
  */
-function connectUrl(sender) {
+function connectUrl(sender, api) {
   const page = sender && sender.url ? new URL(sender.url) : null;
   // after saving, Roundcube shows the settings as POST response to "./" (no _task in the URL)
   const task = page ? page.searchParams.get('_task') : null;
   if (!page || (task !== null && task !== 'settings')) {
     throw new Error('Verbinden ist nur aus den Roundcube-Einstellungen möglich.');
   }
-  return RcApi.normalizeBaseUrl(new URL('./', page).toString());
+  const url = new URL(String(api || 'api/identity/'), new URL('./', page));
+  if (url.origin !== page.origin) {
+    throw new Error('Die API liegt auf einem anderen Server als das Webmail. Bitte URL und Token in den Einstellungen der Erweiterung eintragen.');
+  }
+  return RcApi.normalizeBaseUrl(url.toString());
 }
 
-async function connectCheck(token, sender) {
-  const apiUrl = connectUrl(sender);
+async function connectCheck(token, api, sender) {
+  const apiUrl = connectUrl(sender, api);
   const current = await RcApi.getSettings();
   const info = await RcApi.info(Object.assign({}, current, { apiUrl, token }), { rotate: false });
   return {
@@ -128,8 +132,8 @@ async function connectCheck(token, sender) {
   };
 }
 
-async function connect(token, sender) {
-  const apiUrl = connectUrl(sender);
+async function connect(token, api, sender) {
+  const apiUrl = connectUrl(sender, api);
   const settings = Object.assign({}, await RcApi.getSettings(), { apiUrl, token });
   const info = await RcApi.info(settings, { rotate: false }); // only store working credentials
   await browser.storage.local.set({ apiUrl, token, pendingToken: '' });
@@ -159,9 +163,9 @@ rcidOnMessage((msg, sender) => {
     case 'learnField':
       return wrap(learnField(tabUrl({}, sender), msg.signature));
     case 'connectCheck':
-      return wrap(connectCheck(msg.token, sender));
+      return wrap(connectCheck(msg.token, msg.api, sender));
     case 'connect':
-      return wrap(connect(msg.token, sender));
+      return wrap(connect(msg.token, msg.api, sender));
     case 'openOptions':
       return wrap(browser.runtime.openOptionsPage());
   }

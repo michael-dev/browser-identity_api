@@ -90,6 +90,37 @@ jobs:
           MYSQL_HOST: 127.0.0.1
           MYSQL_PORT: 3306
 
+  web-servers:
+    name: Rewrite rules (nginx, Apache with PHP-FPM)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install nginx, Apache and PHP-FPM
+        run: |
+          sudo DEBIAN_FRONTEND=noninteractive apt-get update -q
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -q nginx apache2 \
+            php8.3-cli php8.3-fpm php8.3-sqlite3 php8.3-intl php8.3-mbstring php8.3-xml php8.3-curl
+          sudo systemctl stop nginx apache2 php8.3-fpm || true
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Integration test through nginx with the README rule
+        run: make integration-test
+        env:
+          WEB: nginx
+          FPM: /usr/sbin/php-fpm8.3
+          PORT: 8089
+
+      - name: Integration test through Apache with the README rule
+        run: make integration-test
+        env:
+          WEB: apache
+          FPM: /usr/sbin/php-fpm8.3
+          PORT: 8090
+
   postfix-guide:
     name: Postfix guide (postmap + triggers)
     runs-on: ubuntu-latest

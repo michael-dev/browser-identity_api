@@ -40,17 +40,19 @@
     const u = new URL(url);
     u.search = '';
     u.hash = '';
-    if (!u.pathname.endsWith('/') && !u.pathname.endsWith('.php')) {
+    if (!u.pathname.endsWith('/')) {
       u.pathname += '/';
     }
     return u.toString();
   }
 
-  /** REST API v1 URL, e.g. endpoint(base, '/v1/identities', { shop: 'gardenshop' }) */
+  /**
+   * REST API v1 URL below the API base URL, e.g.
+   * endpoint('https://webmail.example.org/api/identity/', '/v1/identities', { shop: 'gardenshop' })
+   * -> https://webmail.example.org/api/identity/v1/identities?shop=gardenshop
+   */
   function endpoint(baseUrl, path, params) {
-    const u = new URL(normalizeBaseUrl(baseUrl));
-    u.searchParams.set('_task', 'identity_api');
-    u.searchParams.set('_path', path);
+    const u = new URL(String(path).replace(/^\/+/, ''), normalizeBaseUrl(baseUrl));
     for (const [k, v] of Object.entries(params || {})) {
       if (v !== undefined && v !== null && v !== '') {
         u.searchParams.set(k, v);
@@ -83,10 +85,10 @@
    */
   async function request(path, { method = 'GET', params, body, settings }) {
     if (!settings.apiUrl || !settings.token) {
-      throw new ApiError('Erweiterung ist noch nicht eingerichtet (Webmail-URL und Token in den Einstellungen).', -1);
+      throw new ApiError('Erweiterung ist noch nicht eingerichtet (API-URL und Token in den Einstellungen).', -1);
     }
     if (!isSecureUrl(settings.apiUrl)) {
-      throw new ApiError('Die Webmail-URL muss mit https:// beginnen.', -1);
+      throw new ApiError('Die API-URL muss mit https:// beginnen.', -1);
     }
 
     const ctrl = new AbortController();
@@ -116,7 +118,7 @@
       try {
         data = await res.json();
       } catch (e) {
-        throw new ApiError('Keine gültige API-Antwort (HTTP ' + res.status + '). Ist das Roundcube-Plugin identity_api aktiviert?', res.status);
+        throw new ApiError('Keine gültige API-Antwort (HTTP ' + res.status + '). Stimmt die API-URL (wie in Roundcube unter Einstellungen → Shop-Adressen-API angezeigt)?', res.status);
       }
     }
 

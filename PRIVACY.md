@@ -9,7 +9,7 @@ Roundcube-Webmail-Server, dessen Adresse du in den Einstellungen der Erweiterung
   erzeugt oder aufgelistet werden soll. Der Shop-Name wird aus der Domain der aktuellen Website
   abgeleitet (z. B. `gardenshop.example` → `gardenshop`) und kann vorher geändert werden.
 * **Empfangen wird:** die erzeugte bzw. vorhandene E-Mail-Adresse.
-* **Lokal gespeichert** (nur im Browser, nicht synchronisiert): Webmail-URL, Token, Einstellungen und
+* **Lokal gespeichert** (nur im Browser, nicht synchronisiert): API-URL, Token, Einstellungen und
   die von dir geänderten Shop-Namen pro Website.
 * Es gibt keine Statistik, kein Tracking und keine Übertragung an den Entwickler oder an Dritte.
   Seiteninhalte werden nur lokal ausgewertet, um E-Mail-Felder zu erkennen und auszufüllen.

@@ -31,6 +31,10 @@ let ctx;
   await rc.fill('#rcmloginpwd', 'test');
   await Promise.all([rc.waitForNavigation(), rc.click('#rcmloginsubmit')]);
   await rc.goto(`${rcUrl}?_task=settings&_action=edit-prefs&_section=identityapi&_framed=1`);
+  // the page checks that the API answers at the shown URL (rewrite rule)
+  await rc.waitForTimeout(1000);
+  check('settings: API URL shown and reachable', (await rc.inputValue('#identityapi-url')) === `${rcUrl}api/identity/`
+    && (await rc.textContent('#identityapi-urlcheck')) === '', await rc.textContent('#identityapi-urlcheck'));
   await rc.fill('input[name="_identity_api_new_label"]', 'Chromium e2e');
   await Promise.all([rc.waitForNavigation(), rc.click('button.submit')]);
   const token = await rc.inputValue('#identityapi-newtoken');
@@ -41,7 +45,7 @@ let ctx;
     null, { timeout: 15000 }).catch(() => {});
   check('connect: confirmation names the account', Boolean(dialogs[0] && dialogs[0].includes(`Konto: ${user}`)), JSON.stringify(dialogs));
   const stored = await sw.evaluate(() => chrome.storage.local.get(['apiUrl', 'token']));
-  check('connect: token stored', stored.token === token && stored.apiUrl === rcUrl, JSON.stringify(stored));
+  check('connect: token and API URL stored', stored.token === token && stored.apiUrl === `${rcUrl}api/identity/`, JSON.stringify(stored));
 
   // shop page: inline button -> panel -> create -> fields filled
   const shop = await ctx.newPage();

@@ -583,13 +583,13 @@
 
     // test the token first, so the question can name account and server
     say('Prüfe …');
-    const check = await browser.runtime.sendMessage({ type: 'connectCheck', token: box.dataset.token });
+    const check = await browser.runtime.sendMessage({ type: 'connectCheck', token: box.dataset.token, api: box.dataset.api });
     if (!check || !check.ok) {
       say(check ? check.error : 'Unbekannter Fehler');
       return;
     }
     const { url, user, previousUrl } = check.data;
-    let question = `Erweiterung „Shop-Adressen“ verbinden?\n\nKonto: ${user}\nWebmail: ${url}`;
+    let question = `Erweiterung „Shop-Adressen“ verbinden?\n\nKonto: ${user}\nAPI: ${url}`;
     if (previousUrl) {
       question += previousUrl === url
         ? '\n\nDas bisherige Token wird durch das neue ersetzt.'
@@ -601,7 +601,7 @@
     }
     button.disabled = true;
     say('Verbinde …');
-    const res = await browser.runtime.sendMessage({ type: 'connect', token: box.dataset.token });
+    const res = await browser.runtime.sendMessage({ type: 'connect', token: box.dataset.token, api: box.dataset.api });
     if (res && res.ok) {
       button.textContent = '✓ Verbunden';
       say(`Die Erweiterung ist mit ${res.data.url} verbunden (${res.data.user}). Du kannst jetzt in Bestellformularen Shop-Adressen erzeugen.`);

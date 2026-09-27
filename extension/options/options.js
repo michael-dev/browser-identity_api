@@ -65,7 +65,7 @@ async function save(e) {
     return;
   }
   if (s.apiUrl && !RcApi.isSecureUrl(s.apiUrl)) {
-    status('save-status', 'Die Webmail-URL muss mit https:// beginnen, sonst würde das Token unverschlüsselt übertragen.', 'error');
+    status('save-status', 'Die API-URL muss mit https:// beginnen, sonst würde das Token unverschlüsselt übertragen.', 'error');
     return;
   }
   await browser.storage.local.set(Object.assign({ pendingToken: '' }, s));
