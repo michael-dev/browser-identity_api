@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Shop-Adressen – Einstellungen</title>
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <main>
+    <h1>Shop-Adressen – Einstellungen</h1>
+
+    <section id="permission" class="warn" hidden>
+      <p>Die Erweiterung benötigt Zugriff auf Webseiten, um E-Mail-Felder auszufüllen und den Webmail-Server zu erreichen.</p>
+      <button id="grant" type="button">Zugriff erlauben</button>
+    </section>
+
+    <form id="form">
+      <h2>Verbindung zu Roundcube</h2>
+      <p class="hint">Am einfachsten verbindest du die Erweiterung direkt im Webmail: <em>Einstellungen → Einstellungen →
+        Shop-Adressen-API</em>, Gerätenamen eingeben, speichern und auf <em>„Mit Browser-Erweiterung verbinden“</em> tippen.
+        Alternativ hier URL und Token eintragen.</p>
+      <label for="apiUrl">Webmail-URL</label>
+      <input id="apiUrl" type="url" placeholder="https://webmail.example.org/" required autocomplete="off">
+      <p class="hint">Die Adresse deines Roundcube, wie unter <em>Einstellungen → Shop-Adressen-API</em> angezeigt.</p>
+
+      <label for="token">API-Token</label>
+      <input id="token" type="password" required autocomplete="off" spellcheck="false">
+      <p class="hint">In Roundcube unter <em>Einstellungen → Einstellungen → Shop-Adressen-API</em> ein Token pro Gerät erzeugen.</p>
+
+      <div class="actions">
+        <button id="test" type="button">Verbindung testen</button>
+      </div>
+      <p id="test-status" class="status"></p>
+
+      <label for="defaultDomain">Standard-Domain</label>
+      <select id="defaultDomain"><option value="">(Server-Standard)</option></select>
+
+      <h2>Verhalten</h2>
+      <label class="check"><input id="inlineButton" type="checkbox"> Button in E-Mail-Feldern anzeigen</label>
+      <label class="check"><input id="fillConfirm" type="checkbox"> Bestätigungsfelder („E-Mail wiederholen“) mitfüllen</label>
+      <label class="check"><input id="copyToClipboard" type="checkbox"> Adresse beim Einfügen über das Popup zusätzlich kopieren</label>
+
+      <div class="actions">
+        <button id="save" class="primary" type="submit">Speichern</button>
+      </div>
+      <p id="save-status" class="status"></p>
+    </form>
+
+    <section>
+      <h2>Gemerkte Shop-Namen</h2>
+      <p class="hint">Wenn du den vorgeschlagenen Shop-Namen änderst, merkt sich die Erweiterung den Namen für diese Website.</p>
+      <table id="overrides">
+        <thead><tr><th>Website</th><th>Shop-Name</th><th></th></tr></thead>
+        <tbody></tbody>
+      </table>
+      <p id="no-overrides" class="hint">Keine Einträge.</p>
+    </section>
+
+    <section>
+      <h2>Gemerkte E-Mail-Felder</h2>
+      <p class="hint">Felder, die nicht als E-Mail-Feld erkennbar sind, in die du aber über Popup oder
+        Kontextmenü eine Adresse eingefügt hast. Dort erscheint der Button künftig automatisch.</p>
+      <table id="learned">
+        <thead><tr><th>Website</th><th>Feld</th><th></th></tr></thead>
+        <tbody></tbody>
+      </table>
+      <p id="no-learned" class="hint">Keine Einträge.</p>
+    </section>
+  </main>
+  <script src="../lib/compat.js"></script>
+  <script src="../lib/shop.js"></script>
+  <script src="../lib/api.js"></script>
+  <script src="options.js"></script>
+</body>
+</html>

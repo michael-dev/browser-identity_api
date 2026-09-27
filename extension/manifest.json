@@ -1,0 +1,73 @@
+{
+  "manifest_version": 3,
+  "name": "Shop-Adressen für Roundcube",
+  "short_name": "Shop-Adressen",
+  "version": "1.0",
+  "description": "Erzeugt im Bestellformular on the fly eine shop-spezifische E-Mail-Adresse (<kürzel>-<shop>-<jahr>-<zufall>@domain) als Roundcube-Identität und fügt sie ein.",
+  "homepage_url": "https://github.com/michael-dev/ff-rc-identity",
+  "icons": {
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
+    "96": "icons/icon-96.png",
+    "128": "icons/icon-128.png"
+  },
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "shop-adressen@ff-rc-identity",
+      "strict_min_version": "140.0",
+      "data_collection_permissions": {
+        "required": [
+          "websiteActivity"
+        ]
+      }
+    },
+    "gecko_android": {
+      "strict_min_version": "142.0"
+    }
+  },
+  "permissions": [
+    "storage",
+    "scripting",
+    "menus",
+    "clipboardWrite"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "background": {
+    "scripts": [
+      "lib/compat.js",
+      "lib/shop.js",
+      "lib/api.js",
+      "background.js"
+    ]
+  },
+  "action": {
+    "default_title": "Shop-Adresse erzeugen",
+    "default_popup": "popup/popup.html",
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "32": "icons/icon-32.png",
+      "48": "icons/icon-48.png"
+    }
+  },
+  "options_ui": {
+    "page": "options/options.html",
+    "open_in_tab": true
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "lib/compat.js",
+        "lib/shop.js",
+        "content/content.js"
+      ],
+      "all_frames": true,
+      "run_at": "document_idle"
+    }
+  ]
+}
