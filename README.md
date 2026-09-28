@@ -31,13 +31,14 @@ differences).
 
 ## Installation in Firefox
 
-Use the signed `shop-adressen-<version>-signed.xpi` from the
-[releases](https://github.com/michael-dev/browser-identity_api/releases):
+Install it from **addons.mozilla.org**: <https://addons.mozilla.org/firefox/addon/shop-adressen/>
+(desktop and Android). Firefox keeps it up to date.
 
-* **Desktop:** drag it into a Firefox window, or go to `about:addons` → gear icon → *Install Add-on
-  From File*.
-* **Android:** open *Settings → About Firefox* and tap the Firefox logo five times. Then choose
-  *Settings → Install extension from file*.
+Versions up to 2.2 were only available as signed files from the
+[releases](https://github.com/michael-dev/browser-identity_api/releases)
+(`shop-adressen-<version>-signed.xpi`). addons.mozilla.org offers updates only within the channel an
+installation came from, so remove such an installation and install the extension from there; the
+settings have to be entered again (or use *Connect browser extension* in Roundcube).
 
 For development, load `extension/manifest.json` via `about:debugging` → *This Firefox* → *Load
 Temporary Add-on*.
@@ -174,7 +175,7 @@ the Chrome Web Store:
 |---|---|---|
 | `AMO_JWT_ISSUER`, `AMO_JWT_SECRET` | Secrets | API credentials from <https://addons.mozilla.org/developers/addon/api/key/> |
 | `GECKO_ID` | Variable (optional) | Your own add-on ID, replaces the one in the manifest (`shop-adressen@ff-rc-identity`, kept from the former repository name: a new ID would be a new add-on on addons.mozilla.org) |
-| `AMO_CHANNEL` | Variable (optional) | `unlisted` (default: signed file attached to the release) or `listed` (public on addons.mozilla.org, with listing data from `extension/amo/metadata.json`) |
+| `AMO_CHANNEL` | Variable (optional) | `listed` (default: submitted to addons.mozilla.org with the listing data from `extension/amo/metadata.json`, public once Mozilla approved it) or `unlisted` (signed file attached to the release only) |
 | `CWS_EXTENSION_ID` | Variable (optional) | ID of the item in the Chrome Web Store (create it once by uploading the zip manually) |
 | `CWS_CLIENT_ID`, `CWS_CLIENT_SECRET`, `CWS_REFRESH_TOKEN` | Secrets (optional) | OAuth credentials for the [Chrome Web Store API](https://developer.chrome.com/docs/webstore/using-api) |
 

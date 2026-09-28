@@ -42,8 +42,8 @@ jobs:
       # Optional repository variable to override the add-on ID used for signing.
       GECKO_ID: ${{ vars.GECKO_ID }}
       # "listed" publishes on addons.mozilla.org (with extension/amo/metadata.json), "unlisted"
-      # only signs. Default from repository variable AMO_CHANNEL, else unlisted.
-      AMO_CHANNEL: ${{ (github.event.inputs.channel != '' && github.event.inputs.channel != 'default') && github.event.inputs.channel || vars.AMO_CHANNEL || 'unlisted' }}
+      # only signs. Default from repository variable AMO_CHANNEL, else listed.
+      AMO_CHANNEL: ${{ (github.event.inputs.channel != '' && github.event.inputs.channel != 'default') && github.event.inputs.channel || vars.AMO_CHANNEL || 'listed' }}
       # Only flags here; the secrets themselves are passed to the steps that need them.
       HAS_AMO: ${{ secrets.AMO_JWT_ISSUER != '' && secrets.AMO_JWT_SECRET != '' }}
       HAS_CWS: ${{ vars.CWS_EXTENSION_ID != '' && secrets.CWS_CLIENT_ID != '' && secrets.CWS_CLIENT_SECRET != '' && secrets.CWS_REFRESH_TOKEN != '' }}

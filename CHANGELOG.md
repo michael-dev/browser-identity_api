@@ -1,7 +1,11 @@
 # Changelog
 
-## Unreleased
+## 2.3
 
+* **Published on addons.mozilla.org:** <https://addons.mozilla.org/firefox/addon/shop-adressen/>
+  (desktop and Android). Releases are submitted there by default (`AMO_CHANNEL`, default now
+  `listed`). An installation from a signed file of 2.2 or earlier may not be updated from
+  there: remove it and install the extension from addons.mozilla.org.
 * The Roundcube plugin has moved into its own repository,
   [roundcube-identity_api](https://github.com/michael-dev/roundcube-identity_api), and is installed
   from Packagist (`composer require michael-dev/identity_api`). This repository and its releases
