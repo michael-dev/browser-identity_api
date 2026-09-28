@@ -54,8 +54,8 @@ Edge (Microsoft Edge Add-ons), Brave and Vivaldi install extensions from the Chr
 * **Screenshots (1280×800):** `store/screenshots/1-panel.png`, `2-filled.png`, `3-connect.png`,
   `4-roundcube-settings.png`, `5-options.png`
 * **Small promo tile (440×280):** `store/screenshots/promo-440x280.png`
-* **Homepage:** <https://github.com/michael-dev/ff-rc-identity>
-* **Support:** <https://github.com/michael-dev/ff-rc-identity/issues>
+* **Homepage:** <https://github.com/michael-dev/browser-identity_api>
+* **Support:** <https://github.com/michael-dev/browser-identity_api/issues>
 
 **Description (German):**
 
@@ -67,10 +67,10 @@ Sobald ein E-Mail-Feld den Fokus hat, erscheint darin ein kleiner Button. Er sch
 Wozu? Du siehst, welcher Shop deine Adresse weitergegeben hat, und kannst eine einzelne Adresse auf dem Server stilllegen, ohne dein Postfach zu wechseln.
 
 Voraussetzungen:
-• Ein Mailserver mit der Shop-Adressen-REST-API (offene Spezifikation: https://github.com/michael-dev/ff-rc-identity), z. B. Roundcube 1.5–1.7 mit dem Plugin identity_api aus demselben Repository
+• Ein Mailserver mit der Shop-Adressen-REST-API (offene Spezifikation: https://github.com/michael-dev/browser-identity_api), z. B. Roundcube 1.5–1.7 mit dem Plugin identity_api aus demselben Repository
 • Ein persönliches Token dieses Servers – bei Roundcube per Klick auf „Mit Browser-Erweiterung verbinden“ in den Einstellungen
 
-Datenschutz: Die Erweiterung spricht ausschließlich mit dem Server, dessen API-URL du einträgst. Sie sendet dein Token, den Shop-Namen und ggf. die gewählte Domain und erhält die erzeugte Adresse. Keine Statistik, kein Tracking, keine Dritten. Quelltext: https://github.com/michael-dev/ff-rc-identity
+Datenschutz: Die Erweiterung spricht ausschließlich mit dem Server, dessen API-URL du einträgst. Sie sendet dein Token, den Shop-Namen und ggf. die gewählte Domain und erhält die erzeugte Adresse. Keine Statistik, kein Tracking, keine Dritten. Quelltext: https://github.com/michael-dev/browser-identity_api
 ```
 
 **Description (English, if you add English as a second language):**
@@ -83,10 +83,10 @@ When you focus an e-mail field, a small button appears. It suggests the shop nam
 Why? You see which shop leaked or sold your address, and you can shut down a single address on the server.
 
 Requirements:
-• A mail server offering the shop address REST API (open specification: https://github.com/michael-dev/ff-rc-identity), e.g. Roundcube 1.5–1.7 with the identity_api plugin from the same repository
+• A mail server offering the shop address REST API (open specification: https://github.com/michael-dev/browser-identity_api), e.g. Roundcube 1.5–1.7 with the identity_api plugin from the same repository
 • A personal access token from that server – in Roundcube one click on "Connect browser extension" in the settings
 
-Privacy: The extension only talks to the server whose API URL you configure. It sends your token, the shop name and the chosen domain and receives the generated address. No analytics, no tracking, no third parties. The user interface is in German. Source code: https://github.com/michael-dev/ff-rc-identity
+Privacy: The extension only talks to the server whose API URL you configure. It sends your token, the shop name and the chosen domain and receives the generated address. No analytics, no tracking, no third parties. The user interface is in German. Source code: https://github.com/michael-dev/browser-identity_api
 ```
 
 ### Privacy practices
@@ -119,7 +119,7 @@ for unrelated purposes, no use for creditworthiness or lending):
 * **Web history:** the shop name derived from the domain of the current website, sent to the user's
   own mail server to create the address.
 
-**Privacy policy:** <https://github.com/michael-dev/ff-rc-identity/blob/main/PRIVACY.md>
+**Privacy policy:** <https://github.com/michael-dev/browser-identity_api/blob/main/PRIVACY.md>
 
 ## Screenshots
 

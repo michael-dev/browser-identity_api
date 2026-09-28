@@ -59,11 +59,11 @@ Until the plugin is on Packagist, or to install it directly from the releases, a
 repository contained in the releases first:
 
 ```bash
-composer config repositories.identity_api composer https://github.com/michael-dev/ff-rc-identity/releases/latest/download
+composer config repositories.identity_api composer https://github.com/michael-dev/browser-identity_api/releases/latest/download
 ```
 
 Or manually: extract `identity_api-<version>.tar.gz` (or `.zip`) from the
-[releases](https://github.com/michael-dev/ff-rc-identity/releases) into `plugins/`, so that
+[releases](https://github.com/michael-dev/browser-identity_api/releases) into `plugins/`, so that
 `plugins/identity_api/identity_api.php` exists, and enable it in `config/config.inc.php`:
 
 ```php
@@ -259,7 +259,7 @@ and for Chromium based browsers (`make chrome` creates the Chromium variant with
 ### Installation in Firefox
 
 Use the signed `shop-adressen-<version>-signed.xpi` from the
-[releases](https://github.com/michael-dev/ff-rc-identity/releases):
+[releases](https://github.com/michael-dev/browser-identity_api/releases):
 
 * **Desktop:** drag it into a Firefox window, or go to `about:addons` → gear icon → *Install Add-on
   From File*.
@@ -413,7 +413,7 @@ the Chrome Web Store:
 | Name | Kind | Content |
 |---|---|---|
 | `AMO_JWT_ISSUER`, `AMO_JWT_SECRET` | Secrets | API credentials from <https://addons.mozilla.org/developers/addon/api/key/> |
-| `GECKO_ID` | Variable (optional) | Your own add-on ID, replaces the one in the manifest |
+| `GECKO_ID` | Variable (optional) | Your own add-on ID, replaces the one in the manifest (`shop-adressen@ff-rc-identity`, kept from the former repository name: a new ID would be a new add-on on addons.mozilla.org) |
 | `AMO_CHANNEL` | Variable (optional) | `unlisted` (default: signed file attached to the release) or `listed` (public on addons.mozilla.org, with listing data from `extension/amo/metadata.json`) |
 | `CWS_EXTENSION_ID` | Variable (optional) | ID of the item in the Chrome Web Store (create it once by uploading the zip manually) |
 | `CWS_CLIENT_ID`, `CWS_CLIENT_SECRET`, `CWS_REFRESH_TOKEN` | Secrets (optional) | OAuth credentials for the [Chrome Web Store API](https://developer.chrome.com/docs/webstore/using-api) |
