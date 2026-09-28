@@ -1,4 +1,4 @@
-# identity_api – per-shop e-mail identities for Roundcube
+# Shop-Adressen – per-shop e-mail addresses
 
 Give every online shop its own e-mail address, created on the fly in the checkout form:
 
@@ -8,12 +8,16 @@ Give every online shop its own e-mail address, created on the fly in the checkou
 
 The project consists of:
 
-* **Roundcube plugin `identity_api`** (`plugin/`): creates such addresses as Roundcube
-  identities through a token-authenticated REST API, and lets users create addresses, manage
-  tokens and set their pattern, prefix and domains in the Roundcube settings.
+* **Shop address API** ([docs/openapi.yaml](docs/openapi.yaml)): an open, token-authenticated REST
+  API a mail server offers to create such addresses for the logged in account. Any mail server can
+  implement it, see [Other mail servers](#other-mail-servers).
 * **Browser extension “Shop-Adressen”** for Firefox (desktop and Android) and Chromium based
   browsers (Chrome, Edge, Brave, Vivaldi; `extension/`): detects e-mail fields, suggests the
-  shop name from the website, creates or reuses an address and fills it in.
+  shop name from the website, creates or reuses an address through the API and fills it in. It
+  works with every server offering the API.
+* **Roundcube plugin `identity_api`** (`plugin/`), the reference implementation: creates the
+  addresses as Roundcube identities, and lets users create addresses, manage tokens and set their
+  pattern, prefix and domains in the Roundcube settings.
 * **iPhone/iPad** (no extensions on iOS): an address generator in the Roundcube settings, and an iOS
   Shortcut for the share sheet, see [docs/ios.md](docs/ios.md).
 * **Postfix**: how to deliver mail to the identities from Roundcube's MySQL database, see
@@ -23,13 +27,13 @@ Why? You can tell which shop leaked or sold your address, and you can shut down 
 deleting its identity.
 
 ```
-browser extension ─┐
+browser extension ─┐                   Shop address API
 iOS Shortcut ──────┼─HTTPS + token─▶ identity_api plugin ──▶ Roundcube "identities" table
-other clients ─────┘◀──new address──                                     │
+other clients ─────┘◀──new address── (or another server)                 │
                                                           your mail server delivers per identity
 ```
 
-> **Requirement:** your mail server has to accept mail for the addresses stored as Roundcube
+> **Requirement (Roundcube plugin):** your mail server has to accept mail for the addresses stored as Roundcube
 > identities, e.g. through an SQL lookup on the `identities` table, see
 > [docs/postfix.md](docs/postfix.md) for Postfix. The plugin only manages the identities. A
 > catch-all for the domain works too, but then deleting an identity doesn't stop its mail.
@@ -100,7 +104,7 @@ addresses from listing and deleting when they no longer match, and the Postfix l
 | `identity_api_token_lifetime` | `90` | A token that was not rotated for this many days expires, e.g. on a device that is no longer used (0 = never). Values not larger than the rotation interval are raised to twice the interval. |
 | `identity_api_static_tokens` | `false` | Allow tokens without rotation and expiry, for clients that can't rotate (scripts, iOS Shortcuts) |
 | `identity_api_max_tokens` | `10` | Maximum number of tokens per user |
-| `identity_api_max_identities` | `1000` | Maximum number of identities per user (0 = unlimited) |
+| `identity_api_max_identities` | `5000` | Maximum number of identities per user, all identities counted (0 = unlimited) |
 | `identity_api_rate_limit` | `30` | Maximum number of identities a user can create per hour through the API or the address generator in the settings (0 = unlimited) |
 | `identity_api_max_login_age` | `0` | Reject tokens of users who haven't logged in to the webmail for this many days (0 = off) |
 | `identity_api_unique_identities` | `true` | Refuse identities, also in the Roundcube settings, whose address another user has or had (deleted identities included). Set to `false` for deliberately shared addresses. |
@@ -242,9 +246,10 @@ can't rotate (scripts, iOS Shortcuts), the admin can allow tokens without rotati
 
 ## Browser extension
 
-The same source (`extension/`) is built for Firefox and for Chromium based browsers (`make chrome`
-creates the Chromium variant with a service worker; `extension/lib/compat.js` covers the API
-differences).
+The extension “Shop-Adressen” is a client of the shop address API and works with every mail server
+offering it; the Roundcube plugin above is one. The same source (`extension/`) is built for Firefox
+and for Chromium based browsers (`make chrome` creates the Chromium variant with a service worker;
+`extension/lib/compat.js` covers the API differences).
 
 ### Installation in Firefox
 
@@ -312,6 +317,32 @@ then on. Remembered fields can be removed on the options page.
 and receives the address; there is no tracking. See [PRIVACY.md](PRIVACY.md).
 
 ---
+
+## Other mail servers
+
+The browser extension and the iOS Shortcut only depend on the REST API described in
+[docs/openapi.yaml](docs/openapi.yaml), so any mail server or admin panel can offer it. What the
+extension needs:
+
+* An API base URL (any path, HTTPS) that the user enters in the extension, below it:
+  * `GET /v1/me` → `{"user", "domains": [...], "default_domain", "pattern", "prefix"}`
+  * `GET /v1/identities?shop=<name>` → `{"items": [{"id", "email", ...}]}`
+  * `POST /v1/identities` with JSON `{"shop", "domain"}` (`domain` optional) → 201 with the new
+    identity `{"id", "email", "shop", ...}`
+* Authentication with `Authorization: Bearer <token>`; errors as `application/problem+json` with a
+  `code` (the extension shows German texts for the codes listed in the OpenAPI description).
+* Optional token rotation: send `Identity-Api-Token-Rotate: true` when a token should be renewed,
+  and offer `POST /v1/token/rotate` and `GET /v1/token`. A server that never sends `true` doesn't
+  need them.
+* Optional **connect button** on the server's settings page, for setup with one click: an element
+  `<div id="identityapi-connect" data-token="<new token>" data-api="<API URL>"><button>…</button><div class="hint"></div></div>`.
+  `data-api` is relative to the page or absolute, on the same server as the page. On a real click
+  the extension checks the token with `GET /v1/me`, asks the user in its own page and stores the
+  connection; the `hint` element shows its progress. Without the extension, the button's own
+  handler should explain that the extension is missing.
+
+The extension doesn't need CORS (it has host permissions); the Roundcube plugin still allows the
+extension origins.
 
 ## Development
 

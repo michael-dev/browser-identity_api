@@ -1,4 +1,4 @@
-/* Client for the Roundcube identity_api plugin. Used by background and options page. */
+/* Client for the shop address REST API (docs/openapi.yaml), e.g. of the Roundcube plugin identity_api. */
 (function (root) {
   'use strict';
 
@@ -10,7 +10,7 @@
     fillConfirm: true,
     copyToClipboard: true,
     pending: null, // { apiUrl, base, token }: rotated token not yet confirmed, see doRotate()
-    connectedUser: '', // account of the last "connect" from the Roundcube settings
+    connectedUser: '', // account of the last "connect" from the mail server's settings
     overrides: {}, // siteKey -> shop name chosen by the user
     learnedFields: {}, // siteKey -> ["name:foo", "id:bar"], unrecognized e-mail fields filled by the user
   };
@@ -115,16 +115,16 @@
         res = await fetch(endpoint(settings.apiUrl, path, params), init);
       } catch (e) {
         throw new ApiError(e.name === 'AbortError'
-          ? 'Zeitüberschreitung beim Webmail-Server.'
-          : 'Webmail-Server nicht erreichbar (' + e.message + ').');
+          ? 'Zeitüberschreitung beim Mailserver.'
+          : 'Mailserver nicht erreichbar (' + e.message + ').');
       }
       if (res.status !== 204) {
         try {
           data = await res.json(); // the timeout covers the body too
         } catch (e) {
           throw new ApiError(e.name === 'AbortError'
-            ? 'Zeitüberschreitung beim Webmail-Server.'
-            : 'Keine gültige API-Antwort (HTTP ' + res.status + '). Stimmt die API-URL (wie in Roundcube unter Einstellungen → Einstellungen → Shop-Adressen-API angezeigt)?', res.status);
+            ? 'Zeitüberschreitung beim Mailserver.'
+            : 'Keine gültige API-Antwort (HTTP ' + res.status + '). Stimmt die API-URL (bei Roundcube unter Einstellungen → Einstellungen → Shop-Adressen-API angezeigt)?', res.status);
         }
       }
     } finally {

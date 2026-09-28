@@ -1,10 +1,10 @@
-# Datenschutz / Privacy – Shop-Adressen für Roundcube
+# Datenschutz / Privacy – Shop-Adressen
 
 **Deutsch**
 
-Die Browser-Erweiterung „Shop-Adressen für Roundcube“ (Firefox und Chromium-Browser) kommuniziert
-ausschließlich mit dem Roundcube-Server, dessen API-URL du in den Einstellungen der Erweiterung
-einträgst oder per „Mit Browser-Erweiterung verbinden“ übernimmst.
+Die Browser-Erweiterung „Shop-Adressen“ (Firefox und Chromium-Browser) kommuniziert ausschließlich
+mit dem Mailserver, dessen API-URL du in den Einstellungen der Erweiterung einträgst oder per „Mit
+Browser-Erweiterung verbinden“ übernimmst (z. B. Roundcube mit dem Plugin identity_api).
 
 * **Übertragen wird:** dein API-Token (zur Anmeldung), der Shop-Name, für den eine Adresse
   erzeugt oder aufgelistet werden soll, und ggf. die gewählte Domain. Der Shop-Name wird aus der Domain der aktuellen Website
@@ -16,12 +16,12 @@ einträgst oder per „Mit Browser-Erweiterung verbinden“ übernimmst.
 * Es gibt keine Statistik, kein Tracking und keine Übertragung an den Entwickler oder an Dritte.
   Seiteninhalte werden nur lokal ausgewertet, um E-Mail-Felder zu erkennen und auszufüllen.
 
-Verantwortlich für die Daten auf dem Server ist der Betreiber des jeweiligen Roundcube-Servers.
+Verantwortlich für die Daten auf dem Server ist dessen Betreiber.
 
 **English**
 
-The browser extension (Firefox and Chromium based browsers) only communicates with the Roundcube
-server whose API URL the user configured. It sends the API token, the shop name (derived from the
+The browser extension “Shop-Adressen” (Firefox and Chromium based browsers) only communicates with
+the mail server whose API URL the user configured (e.g. Roundcube with the identity_api plugin). It sends the API token, the shop name (derived from the
 current website's domain, editable) and the chosen domain, and receives the generated e-mail
 address. Settings, the account name, shop names you changed and remembered e-mail fields (website
 plus field name/id) are stored locally in the browser and are not synced. There is

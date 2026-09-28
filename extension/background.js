@@ -1,4 +1,4 @@
-/* Background (event page): talks to Roundcube, serves popup/content script requests. */
+/* Background (event page / service worker): talks to the mail server's API, serves popup/content script requests. */
 'use strict';
 
 const menus = browser.menus || browser.contextMenus; // not available on Android
@@ -109,7 +109,8 @@ async function uiSettings() {
 }
 
 /**
- * "Connect" button in the Roundcube settings. Any website can show such a
+ * "Connect" button on the settings page of a mail server offering the API
+ * (e.g. Roundcube; protocol in the README). Any website can show such a
  * button, so the page only makes an offer: the API URL (resolved against the
  * page, same server only) and the token are checked, and the user confirms
  * them in the extension's own page connect/connect.html, which shows the
@@ -117,14 +118,12 @@ async function uiSettings() {
  */
 function connectUrl(sender, api) {
   const page = sender && sender.tab && sender.url ? new URL(sender.url) : null;
-  // after saving, Roundcube shows the settings as POST response to "./" (no _task in the URL)
-  const task = page ? page.searchParams.get('_task') : null;
-  if (!page || (task !== null && task !== 'settings')) {
-    throw new Error('Verbinden ist nur aus den Roundcube-Einstellungen möglich.');
+  if (!page || !/^https?:$/.test(page.protocol)) {
+    throw new Error('Verbinden ist nur von einer Webseite aus möglich.');
   }
   const url = new URL(String(api || 'api/identity/'), new URL('./', page));
   if (url.origin !== page.origin) {
-    throw new Error('Die API liegt auf einem anderen Server als das Webmail. Bitte URL und Token in den Einstellungen der Erweiterung eintragen.');
+    throw new Error('Die API liegt auf einem anderen Server als die Seite. Bitte URL und Token in den Einstellungen der Erweiterung eintragen.');
   }
   return RcApi.normalizeBaseUrl(url.toString());
 }
@@ -179,7 +178,7 @@ async function connectDetails(id, sender) {
   }
   const offer = await takeOffer(id, false);
   if (!offer) {
-    throw new Error('Die Anfrage ist abgelaufen. Bitte in Roundcube erneut „Mit Browser-Erweiterung verbinden“ wählen.');
+    throw new Error('Die Anfrage ist abgelaufen. Bitte im Webmail erneut „Mit Browser-Erweiterung verbinden“ wählen.');
   }
   const current = await RcApi.getSettings();
   const connected = Boolean(current.apiUrl && current.token);
@@ -197,7 +196,7 @@ async function connectConfirm(id, sender) {
   }
   const offer = await takeOffer(id, true);
   if (!offer) {
-    throw new Error('Die Anfrage ist abgelaufen. Bitte in Roundcube erneut „Mit Browser-Erweiterung verbinden“ wählen.');
+    throw new Error('Die Anfrage ist abgelaufen. Bitte im Webmail erneut „Mit Browser-Erweiterung verbinden“ wählen.');
   }
   await browser.storage.local.set({ apiUrl: offer.apiUrl, token: offer.token, pending: null, connectedUser: offer.user });
   return { url: offer.apiUrl, user: offer.user };

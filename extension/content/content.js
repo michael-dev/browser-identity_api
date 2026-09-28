@@ -512,7 +512,7 @@
     if (!ctx.configured) {
       setStatus('');
       createBtn.disabled = true;
-      status.append('Noch nicht eingerichtet: im Webmail unter Einstellungen → Einstellungen → Shop-Adressen-API ein Token erzeugen und „Mit Browser-Erweiterung verbinden“ wählen, oder ',
+      status.append('Noch nicht eingerichtet: im Webmail ein Token erzeugen (bei Roundcube: Einstellungen → Einstellungen → Shop-Adressen-API) und „Mit Browser-Erweiterung verbinden“ wählen, oder ',
         el('a', { text: 'manuell einrichten', onclick: () => browser.runtime.sendMessage({ type: 'openOptions' }) }), '.');
       return;
     }
@@ -574,7 +574,7 @@
   }, true);
 
   // -------------------------------------------------------------------------
-  // "Connect" button in the Roundcube settings (shown once after creating a token)
+  // "Connect" button in the mail server's settings (e.g. Roundcube, shown once after creating a token)
 
   // Only reacts to a real click on the button. Any website could show such a
   // button, so nothing is stored here: the extension checks the token and asks

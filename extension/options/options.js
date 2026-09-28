@@ -153,7 +153,7 @@ async function init() {
   // permissions.request() needs a user gesture, don't await anything before it
   $('grant').addEventListener('click', () => browser.permissions.request(ALL_SITES).then(checkPermission));
 
-  // token rotated or connected from Roundcube while this page is open:
+  // token rotated or connected from the webmail while this page is open:
   // show the new values, otherwise saving would write back a stale token
   browser.storage.onChanged.addListener((changes, area) => {
     if (area !== 'local') return;

@@ -11,22 +11,23 @@
     <h1>Shop-Adressen – Einstellungen</h1>
 
     <section id="permission" class="warn" hidden>
-      <p>Die Erweiterung benötigt Zugriff auf Webseiten, um E-Mail-Felder auszufüllen und den Webmail-Server zu erreichen.</p>
+      <p>Die Erweiterung benötigt Zugriff auf Webseiten, um E-Mail-Felder auszufüllen und deinen Mailserver zu erreichen.</p>
       <button id="grant" type="button">Zugriff erlauben</button>
     </section>
 
     <form id="form">
-      <h2>Verbindung zu Roundcube</h2>
-      <p class="hint">Am einfachsten verbindest du die Erweiterung direkt im Webmail: <em>Einstellungen → Einstellungen →
-        Shop-Adressen-API</em>, Gerätenamen eingeben, speichern und auf <em>„Mit Browser-Erweiterung verbinden“</em> klicken.
-        Alternativ hier API-URL und Token eintragen.</p>
+      <h2>Verbindung zum Mailserver</h2>
+      <p class="hint">Die Erweiterung arbeitet mit jedem Mailserver, der die Shop-Adressen-API anbietet, z. B. Roundcube mit
+        dem Plugin identity_api. Am einfachsten verbindest du sie direkt im Webmail (bei Roundcube: <em>Einstellungen → Einstellungen → Shop-Adressen-API</em>: Gerätenamen
+        eingeben, speichern und auf <em>„Mit Browser-Erweiterung verbinden“</em> klicken). Alternativ hier API-URL und
+        Token eintragen.</p>
       <label for="apiUrl">API-URL</label>
       <input id="apiUrl" type="url" placeholder="https://webmail.example.org/api/identity/" required autocomplete="off">
-      <p class="hint">Wie in Roundcube unter <em>Einstellungen → Einstellungen → Shop-Adressen-API</em> (Abschnitt „Verbindung“) angezeigt.</p>
+      <p class="hint">Die URL der Shop-Adressen-API deines Mailservers (bei Roundcube: <em>Einstellungen → Einstellungen → Shop-Adressen-API</em>, Abschnitt „Verbindung“).</p>
 
       <label for="token">API-Token</label>
       <input id="token" type="password" required autocomplete="off" spellcheck="false">
-      <p class="hint">In Roundcube unter <em>Einstellungen → Einstellungen → Shop-Adressen-API</em> ein Token pro Gerät erzeugen.</p>
+      <p class="hint">Ein Token pro Gerät, erzeugt auf deinem Mailserver (bei Roundcube: <em>Einstellungen → Einstellungen → Shop-Adressen-API</em>).</p>
 
       <div class="actions">
         <button id="test" type="button">Verbindung testen</button>

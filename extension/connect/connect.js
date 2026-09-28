@@ -1,4 +1,4 @@
-/* Confirmation of a "connect" request from the Roundcube settings (see background.js). */
+/* Confirmation of a "connect" request from the mail server's settings page (see background.js). */
 'use strict';
 
 const $ = (id) => document.getElementById(id);
