@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="de"><head><meta charset="utf-8"><title>Gartenparadies – Kasse</title><link rel="icon" href="data:,">
+<style>
+  body { margin: 0; font: 15px/1.5 system-ui, sans-serif; color: #22302a; background: #f4f7f2; }
+  header { background: #2f6b3a; color: #fff; padding: 14px 32px; font-size: 20px; font-weight: 700; }
+  header span { font-weight: 400; opacity: .8; font-size: 14px; margin-left: 12px; }
+  main { display: flex; gap: 32px; padding: 28px 32px; }
+  form { flex: 1; background: #fff; border-radius: 10px; padding: 20px 24px; box-shadow: 0 1px 3px rgba(0,0,0,.1); }
+  aside { width: 300px; background: #fff; border-radius: 10px; padding: 20px 24px; box-shadow: 0 1px 3px rgba(0,0,0,.1); height: fit-content; }
+  h2 { margin: 0 0 8px; font-size: 18px; }
+  label { display: block; margin-top: 12px; font-size: 13px; color: #55645c; }
+  input { width: 100%; padding: 9px; border: 1px solid #c9d3cc; border-radius: 6px; font: inherit; box-sizing: border-box; }
+  .row { display: flex; gap: 12px; } .row > div { flex: 1; }
+  .item { display: flex; justify-content: space-between; margin: 6px 0; }
+  .sum { border-top: 1px solid #dde4df; margin-top: 12px; padding-top: 10px; font-weight: 700; }
+  button { margin-top: 18px; background: #2f6b3a; color: #fff; border: 0; border-radius: 6px; padding: 10px 18px; font: inherit; }
+</style></head><body>
+<header>Gartenparadies<span>Beispielshop</span></header>
+<main>
+  <form onsubmit="return false">
+    <h2>Kasse – Ihre Daten</h2>
+    <div class="row">
+      <div><label for="first">Vorname</label><input id="first" value="Alex"></div>
+      <div><label for="last">Nachname</label><input id="last" value="Beispiel"></div>
+    </div>
+    <label for="mail">E-Mail-Adresse</label><input type="email" id="mail" name="email" autocomplete="email">
+    <label for="mail2">E-Mail-Adresse wiederholen</label><input type="email" id="mail2" name="email_confirm">
+    <label for="street">Straße und Hausnummer</label><input id="street" value="Musterweg 1">
+    <div class="row">
+      <div><label for="zip">PLZ</label><input id="zip" value="12345"></div>
+      <div><label for="city">Ort</label><input id="city" value="Beispielstadt"></div>
+    </div>
+    <button type="submit">Weiter zur Zahlung</button>
+  </form>
+  <aside>
+    <h2>Warenkorb</h2>
+    <div class="item"><span>Gießkanne, 10 l</span><span>19,90 €</span></div>
+    <div class="item"><span>Saatgut-Set</span><span>7,50 €</span></div>
+    <div class="item sum"><span>Summe</span><span>27,40 €</span></div>
+  </aside>
+</main>
+</body></html>

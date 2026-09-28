@@ -231,3 +231,11 @@ jobs:
           for tag in $(git tag -l); do
             if [ "$tag" != "$TAG" ]; then gh api -X DELETE "repos/$GITHUB_REPOSITORY/git/refs/tags/$tag" || true; fi
           done
+
+  # plugin-only repository for Packagist (skipped until it is set up, see README)
+  mirror-plugin:
+    needs: release
+    uses: ./.github/workflows/plugin-mirror.yml
+    with:
+      tag: ${{ github.event.inputs.tag || github.ref_name }}
+    secrets: inherit

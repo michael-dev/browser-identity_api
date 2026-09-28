@@ -49,12 +49,17 @@ handles fewer characters.
 
 ### Installation
 
-With Composer, from the Roundcube directory. The releases contain a Composer repository, add it
-once:
+With Composer, from the Roundcube directory:
+
+```bash
+composer require michael-dev/identity_api
+```
+
+Until the plugin is on Packagist, or to install it directly from the releases, add the Composer
+repository contained in the releases first:
 
 ```bash
 composer config repositories.identity_api composer https://github.com/michael-dev/ff-rc-identity/releases/latest/download
-composer require michael-dev/identity_api
 ```
 
 Or manually: extract `identity_api-<version>.tar.gz` (or `.zip`) from the
@@ -266,7 +271,7 @@ Temporary Add-on*.
 
 ### Installation in Chrome, Edge, Brave, Vivaldi
 
-* **From the Chrome Web Store**, once it is published there (see *Releases*); Edge, Brave and
+* **From the Chrome Web Store**, once it is published there ([docs/publishing.md](docs/publishing.md)); Edge, Brave and
   Vivaldi can install extensions from the Chrome Web Store too.
 * **Without store:** unzip `shop-adressen-chrome-<version>.zip` from the releases, open
   `chrome://extensions`, enable *Developer mode* and choose *Load unpacked*. Chrome doesn't install
@@ -396,10 +401,10 @@ published release is never rebuilt, release a new version instead. The plugin ar
 reproducible (same bytes for the same commit).
 
 Composer installs a package from the root of its source, so it can't install the plugin from this
-repository directly; the plugin archive has the plugin files at its root. This also rules out
-Packagist, which reads `composer.json` from the repository root. To list the plugin there (and on
-plugins.roundcube.net), publish `plugin/` as a separate repository, e.g. with `git subtree split
---prefix plugin`.
+repository directly; the plugin archive has the plugin files at its root. For Packagist, which reads
+`composer.json` from the root of a repository, releases are mirrored into a plugin-only repository
+(workflow *Mirror plugin*). How to set that up, and how to publish the extension in the Chrome Web
+Store (listing texts, permission justifications, screenshots): [docs/publishing.md](docs/publishing.md).
 
 **Signing and stores:** with these repository settings (*Settings → Secrets and variables →
 Actions*), releases get the Firefox extension signed by Mozilla and upload the Chrome variant to
@@ -412,6 +417,8 @@ the Chrome Web Store:
 | `AMO_CHANNEL` | Variable (optional) | `unlisted` (default: signed file attached to the release) or `listed` (public on addons.mozilla.org, with listing data from `extension/amo/metadata.json`) |
 | `CWS_EXTENSION_ID` | Variable (optional) | ID of the item in the Chrome Web Store (create it once by uploading the zip manually) |
 | `CWS_CLIENT_ID`, `CWS_CLIENT_SECRET`, `CWS_REFRESH_TOKEN` | Secrets (optional) | OAuth credentials for the [Chrome Web Store API](https://developer.chrome.com/docs/webstore/using-api) |
+| `PLUGIN_REPO` | Variable (optional) | Plugin-only repository for Packagist, e.g. `michael-dev/roundcube-identity_api` ([docs/publishing.md](docs/publishing.md)) |
+| `PLUGIN_REPO_DEPLOY_KEY` | Secret (optional) | Private SSH key with write access to `PLUGIN_REPO` (deploy key) |
 
 Mozilla signs every version only once, so use a new tag for a new signed build.
 

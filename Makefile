@@ -19,14 +19,14 @@ chrome:
 	rm -f dist/shop-adressen-chrome-$(VERSION).zip
 	cd dist/chrome && zip -r -X ../shop-adressen-chrome-$(VERSION).zip . -x '.*' '*/.*'
 
-PLUGIN_FILES := identity_api.php identity_api.js lib localization config.inc.php.dist composer.json
+PLUGIN_FILES := identity_api.php identity_api.js lib localization config.inc.php.dist composer.json README.md
 
 # Roundcube plugin archives; the zip is also the Composer package
 # (Composer can't extract tar archives on PHP < 8)
 plugin:
 	rm -rf dist/plugin && mkdir -p dist/plugin/identity_api
 	cd plugin && cp -R $(PLUGIN_FILES) ../dist/plugin/identity_api/
-	cp LICENSE README.md CHANGELOG.md dist/plugin/identity_api/
+	cp LICENSE CHANGELOG.md dist/plugin/identity_api/
 	chmod -R u=rwX,go=rX dist/plugin
 	find dist/plugin -exec touch -h -d @$(SOURCE_DATE_EPOCH) {} +
 	rm -f dist/identity_api-$(VERSION).tar.gz dist/identity_api-$(VERSION).zip

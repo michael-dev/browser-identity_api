@@ -4,6 +4,16 @@
 const { chromium } = require('playwright');
 
 const [ext, rcUrl, shopPort, user, work] = process.argv.slice(2);
+// SCREENSHOTS=<dir>: also take the screenshots for the store listings (1280x800)
+const shots = process.env.SCREENSHOTS;
+const fs = require('fs');
+const path = require('path');
+const shot = async (page, name) => {
+  if (shots) {
+    await page.waitForTimeout(400);
+    await page.screenshot({ path: path.join(shots, name + '.png') });
+  }
+};
 let fails = 0;
 const check = (name, cond, extra = '') => {
   console.log(`${cond ? 'ok  ' : 'FAIL'} e2e: ${name}${cond ? '' : ' ' + extra}`);
@@ -13,9 +23,9 @@ const check = (name, cond, extra = '') => {
 let ctx;
 (async () => {
   ctx = await chromium.launchPersistentContext(`${work}/chromium-profile`, {
-    channel: 'chromium', headless: true, viewport: { width: 1000, height: 800 },
+    channel: 'chromium', headless: true, viewport: { width: 1280, height: 800 }, locale: 'de-DE',
     args: [`--disable-extensions-except=${ext}`, `--load-extension=${ext}`,
-      `--host-resolver-rules=MAP www.test-shop.example 127.0.0.1:${shopPort}`],
+      `--host-resolver-rules=MAP www.test-shop.example 127.0.0.1:${shopPort}, MAP www.gartenparadies.example 127.0.0.1:${shopPort}`],
   });
   let [sw] = ctx.serviceWorkers();
   if (!sw) sw = await ctx.waitForEvent('serviceworker', { timeout: 15000 });
@@ -48,6 +58,15 @@ let ctx;
     confirmPage.url().startsWith(`chrome-extension://${extId}/connect/connect.html`)
     && (await confirmPage.textContent('#host')) === new URL(rcUrl).host && (await confirmPage.textContent('#user')) === user,
     confirmPage.url());
+  if (shots) {
+    // illustration: a real server name instead of the local test server
+    await confirmPage.evaluate(() => {
+      document.querySelector('#host').textContent = 'webmail.example.org';
+      document.querySelector('#url').textContent = 'https://webmail.example.org/api/identity/';
+      document.querySelector('#warning').hidden = true;
+    });
+    await shot(confirmPage, '3-connect');
+  }
   const before = await sw.evaluate(() => chrome.storage.local.get(['token']));
   check('connect: nothing stored before confirming', !before.token, JSON.stringify(before));
   await confirmPage.click('#confirm');
@@ -107,6 +126,11 @@ let ctx;
   check('options: connection test', (await opt.textContent('#test-status')).includes(`Verbunden als ${user}`),
     await opt.textContent('#test-status'));
 
+  if (shots) {
+    fs.mkdirSync(shots, { recursive: true });
+    await storeScreenshots(ctx, rc, opt);
+  }
+
   check('no errors', errors.length === 0, JSON.stringify(errors));
   await ctx.close();
   process.exit(fails ? 1 : 0);
@@ -119,3 +143,68 @@ let ctx;
   }
   process.exit(1);
 });
+
+/** Screenshots and promo tile for the store listings (Chrome Web Store, AMO). */
+async function storeScreenshots(ctx, rc, opt) {
+  const demoUrl = 'https://webmail.example.org/api/identity/';
+
+  // prefix of the demo person in the checkout
+  await rc.goto(`${rcUrl}?_task=settings&_action=edit-prefs&_section=identityapi&_framed=1`);
+  await rc.fill('#identityapi-prefix', 'alex');
+  await Promise.all([rc.waitForNavigation(), rc.click('button.submit')]);
+
+  // checkout page of a (fictional) shop: panel with suggestion and an existing
+  // address, then the filled form
+  const shop = await ctx.newPage();
+  await shop.goto('http://www.gartenparadies.example/store-shop.html');
+  const openPanel = async () => {
+    await shop.focus('#mail');
+    await shop.waitForTimeout(800);
+    const box = await shop.locator('#mail').boundingBox();
+    await shop.mouse.click(box.x + box.width - 16, box.y + box.height / 2);
+    await shop.waitForTimeout(1500);
+  };
+  await openPanel();
+  await shop.keyboard.press('Enter'); // an earlier address for this shop
+  await shop.waitForFunction(() => document.querySelector('#mail').value, null, { timeout: 15000 }).catch(() => {});
+  await shop.fill('#mail', '');
+  await shop.fill('#mail2', '');
+  await shop.click('h2');
+  await shop.waitForTimeout(3500); // toast gone
+  await openPanel();
+  await shot(shop, '1-panel');
+  await shop.keyboard.press('Enter');
+  await shop.waitForFunction(() => document.querySelector('#mail').value, null, { timeout: 15000 }).catch(() => {});
+  await shop.waitForTimeout(600);
+  await shot(shop, '2-filled');
+
+  // address generator and tokens in the Roundcube settings
+  await rc.goto(`${rcUrl}?_task=settings&_action=preferences`);
+  await rc.click('#rcmrowidentityapi a, tr#rcmrowidentityapi, a[href*="_section=identityapi"]').catch(() => {});
+  await rc.waitForTimeout(2500);
+  for (const frame of rc.frames()) {
+    await frame.evaluate((url) => {
+      const input = document.querySelector('#identityapi-url');
+      if (input) input.value = url;
+    }, demoUrl).catch(() => {});
+  }
+  await shot(rc, '4-roundcube-settings');
+
+  await opt.reload();
+  await opt.waitForTimeout(1500);
+  await opt.fill('#apiUrl', demoUrl); // illustration only, not saved
+  await shot(opt, '5-options');
+
+  // small promo tile 440x280
+  const tile = await ctx.newPage();
+  await tile.setViewportSize({ width: 440, height: 280 });
+  const icon = fs.readFileSync(path.join(__dirname, '../../extension/icons/icon.svg'), 'utf8');
+  await tile.setContent(`<body style="margin:0;width:440px;height:280px;display:flex;align-items:center;gap:20px;
+    padding:0 26px;box-sizing:border-box;background:#2b6cb0;color:#fff;font-family:system-ui,sans-serif">
+    <div style="width:104px;height:104px;flex:none">${icon}</div>
+    <div><div style="font-size:30px;font-weight:700;white-space:nowrap">Shop-Adressen</div>
+    <div style="font-size:17px;margin-top:8px;line-height:1.35">Eine eigene E-Mail-Adresse<br>für jeden Onlineshop</div></div></body>`);
+  await tile.screenshot({ path: path.join(shots, 'promo-440x280.png') });
+  await tile.close();
+  await shop.close();
+}
