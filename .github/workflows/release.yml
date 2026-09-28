@@ -117,6 +117,9 @@ jobs:
         run: |
           if [ "$RELEASE_STATE" = none ]; then
             gh release create "$TAG" --draft --title "$VERSION" --notes "Release is being built." --target "$TARGET"
+          else
+            # continued draft: the tag will point to the commit built now
+            gh release edit "$TAG" --target "$TARGET"
           fi
           gh release upload "$TAG" dist/*.xpi dist/*.zip dist/*.tar.gz --clobber
 

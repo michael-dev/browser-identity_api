@@ -18,7 +18,11 @@ if (!template || !archives.length) {
   process.exit(2);
 }
 
-const fallback = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'plugin', 'composer.json'), 'utf8'));
+// metadata for archives without composer.json: the plugin's current one (from the
+// working directory, the release workflow runs a copy of this script from elsewhere)
+const fallbackFile = [path.resolve('plugin', 'composer.json'), path.join(__dirname, '..', 'plugin', 'composer.json')]
+  .find((f) => fs.existsSync(f));
+const fallback = JSON.parse(fs.readFileSync(fallbackFile, 'utf8'));
 const versions = {};
 
 for (const arg of archives) {
