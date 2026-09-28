@@ -1,5 +1,5 @@
 // End-to-end test of the real Chromium extension (dist/chrome) against a running
-// Roundcube with the plugin, see tests/integration.sh (E2E=1).
+// Roundcube with the plugin, see tests/client.sh (E2E=1).
 // Usage: node chromium-extension.test.js <extension-dir> <roundcube-url> <shop-port> <user> <work-dir>
 const { chromium } = require('playwright');
 

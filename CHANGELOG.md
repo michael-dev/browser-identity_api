@@ -2,10 +2,16 @@
 
 ## Unreleased
 
+* The Roundcube plugin has moved into its own repository,
+  [roundcube-identity_api](https://github.com/michael-dev/roundcube-identity_api), and is installed
+  from Packagist (`composer require michael-dev/identity_api`). This repository and its releases
+  only contain the browser extension; the Composer repository in the releases
+  (`…/releases/latest/download`) is no longer updated. Up to 2.2 this changelog covers both.
 * The repository is now `michael-dev/browser-identity_api` (before: `ff-rc-identity`, GitHub
-  redirects the old links); the Roundcube plugin is also published as its own repository
-  `michael-dev/roundcube-identity_api` for Packagist. The add-on ID `shop-adressen@ff-rc-identity`
-  stays, so installed extensions keep receiving updates.
+  redirects the old links). The add-on ID `shop-adressen@ff-rc-identity` stays, so installed
+  extensions keep receiving updates.
+* Tests: the extension's API client and end-to-end tests run against the plugin's integration test
+  (`CLIENT_TEST`, `tests/client.sh`); CI checks out the plugin's `main`.
 
 ## 2.2
 

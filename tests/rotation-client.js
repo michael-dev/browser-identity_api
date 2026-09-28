@@ -1,5 +1,5 @@
 // Runs the extension's API client (extension/lib/api.js) against a test server
-// and checks the automatic token rotation. Usage: node tests/rotation-client.js <base-url> <token>
+// and checks the automatic token rotation. Usage: node tests/rotation-client.js <api-url> <token> (see tests/client.sh)
 const fs = require('fs');
 const path = require('path');
 

@@ -1,4 +1,4 @@
-/* Client for the shop address REST API (docs/openapi.yaml), e.g. of the Roundcube plugin identity_api. */
+/* Client for the shop address REST API (docs/openapi.yaml of the Roundcube plugin identity_api, the reference implementation). */
 (function (root) {
   'use strict';
 
@@ -62,7 +62,7 @@
     return u.toString();
   }
 
-  // error codes of the REST API (docs/openapi.yaml)
+  // error codes of the REST API (docs/openapi.yaml of the plugin)
   const ERRORS = {
     unauthorized: 'Token ungültig, widerrufen oder abgelaufen.',
     domain_not_allowed: 'Diese Domain ist auf dem Server nicht freigegeben.',
