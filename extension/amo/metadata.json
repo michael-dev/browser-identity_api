@@ -1,15 +1,9 @@
 {
   "slug": "shop-adressen",
-  "categories": {
-    "firefox": [
-      "privacy-security",
-      "shopping"
-    ],
-    "android": [
-      "privacy-security",
-      "shopping"
-    ]
-  },
+  "categories": [
+    "privacy-security",
+    "shopping"
+  ],
   "summary": {
     "en-US": "Creates a unique e-mail address per online shop (<prefix>-<shop>-<year>-<random>@your-domain) on your own mail server and fills it into the order form. Works with any server offering the shop address API, e.g. Roundcube with the identity_api plugin.",
     "de": "Erzeugt pro Onlineshop eine eigene E-Mail-Adresse (<kürzel>-<shop>-<jahr>-<zufall>@deine-domain) auf deinem Mailserver und fügt sie ins Bestellformular ein. Für jeden Server mit der Shop-Adressen-API, z. B. Roundcube mit dem Plugin identity_api."
@@ -19,7 +13,7 @@
     "de": "Jeder Onlineshop bekommt seine eigene E-Mail-Adresse – erzeugt direkt im Bestellformular.\n\nSobald ein E-Mail-Feld den Fokus hat, erscheint darin ein kleiner Button. Er schlägt den Shop-Namen aus der Website vor (z. B. gardenshop.example → gardenshop), lässt deinen Mailserver eine neue Adresse wie m-gardenshop-2026-k3x9q2ab@deine-domain anlegen und fügt sie ein, auch in Felder wie „E-Mail wiederholen“. Adressen, die es für den Shop schon gibt, werden zur Wiederverwendung angeboten. Das Toolbar-Popup (auch auf Android) und ein Kontextmenü (Desktop) können dasselbe.\n\nWozu? Du siehst, welcher Shop deine Adresse weitergegeben hat, und kannst eine einzelne Adresse auf dem Server stilllegen.\n\nVoraussetzungen:\n• Ein Mailserver mit der Shop-Adressen-REST-API (offene Spezifikation), z. B. Roundcube 1.5–1.7 mit dem Plugin identity_api: https://github.com/michael-dev/roundcube-identity_api\n• Ein persönliches Token dieses Servers (bei Roundcube unter Einstellungen → Einstellungen → Shop-Adressen-API, per Klick mit „Mit Browser-Erweiterung verbinden“)\n\nDatenschutz: Die Erweiterung spricht ausschließlich mit dem Server, dessen API-URL du einträgst. Sie sendet dein Token und den Shop-Namen und erhält die erzeugte Adresse – sonst verlässt nichts den Browser, keine Statistik, keine Dritten."
   },
   "version": {
-    "license": "GPL-3.0-or-later",
+    "license": "GPL-3.0-only",
     "approval_notes": "The extension is a client for the shop address REST API of the user's own mail server (specification docs/openapi.yaml of the plugin; reference implementation: a Roundcube plugin, source: https://github.com/michael-dev/roundcube-identity_api; the extension is in extension/ of https://github.com/michael-dev/browser-identity_api). It only contacts the API URL configured by the user (e.g. https://webmail.example.org/api/identity/; set on the options page or confirmed on the extension page connect/connect.html) and sends an API token plus the shop name and chosen domain. No build step, no minified or third-party code. tests/integration.sh in the plugin repository shows how to run Roundcube with SQLite and the plugin locally (PHP + curl) and how tokens are created (with that test setup the API URL is http://127.0.0.1:8089/api/identity/); the README describes the full setup."
   }
 }

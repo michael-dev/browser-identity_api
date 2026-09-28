@@ -26,6 +26,10 @@ on:
         description: 'Delete all other releases and their tags after publishing (fresh start)'
         type: boolean
         default: false
+      amo_resubmit:
+        description: 'Submit to addons.mozilla.org although an earlier run for this tag may have (only if it failed there)'
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -134,6 +138,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           WEB_EXT_API_KEY: ${{ secrets.AMO_JWT_ISSUER }}
           WEB_EXT_API_SECRET: ${{ secrets.AMO_JWT_SECRET }}
+          AMO_RESUBMIT: ${{ github.event.inputs.amo_resubmit }}
         run: |
           signed="shop-adressen-$VERSION-signed.xpi"
           case "$AMO_CHANNEL" in
@@ -148,8 +153,8 @@ jobs:
               gh release upload "$TAG" "dist/$signed"
               ;;
             listed)
-              if [ "$RELEASE_STATE" = draft ] || [ "$GITHUB_RUN_ATTEMPT" != 1 ]; then
-                echo "::warning::Not submitting again: an earlier run may already have submitted $VERSION to addons.mozilla.org"
+              if { [ "$RELEASE_STATE" = draft ] || [ "$GITHUB_RUN_ATTEMPT" != 1 ]; } && [ "$AMO_RESUBMIT" != true ]; then
+                echo "::warning::Not submitting again: an earlier run may already have submitted $VERSION to addons.mozilla.org (run with amo_resubmit if it failed there)"
                 exit 0
               fi
               # Submit for review and don't wait: Mozilla publishes the version on
