@@ -1,5 +1,9 @@
 {
   "slug": "shop-adressen",
+  "name": {
+    "en-US": "Shop-Adressen",
+    "de": "Shop-Adressen"
+  },
   "categories": [
     "privacy-security",
     "shopping"
