@@ -58,7 +58,7 @@ Chrome on Android and iOS doesn't support extensions. On iPhone/iPad, see the
 
 * **One click:** with the extension installed, create a token in the Roundcube settings
   (*Settings → Preferences → Shop address API*) and click **Connect browser extension**. The
-  extension checks the token and opens its own confirmation page, which shows the server, the API URL and the account; only after *Verbinden* it
+  extension checks the token and opens its own confirmation page, which shows the server, the API URL and the account; only after *Connect* it
   stores them.
   * Any website could show such a button, so nothing is stored without that confirmation, and it
     warns if the server or the account changes. Confirm only if you just clicked the button in your
@@ -66,14 +66,14 @@ Chrome on Android and iOS doesn't support extensions. On iPhone/iPad, see the
   * The API URL must be on the same server as the settings page.
 * **Manually:** on the extension's options page, enter the API URL shown in Roundcube under
   *Connection* (e.g. `https://webmail.example.org/api/identity/`; `https://` required, except
-  `localhost`) and the token, then click *Verbindung testen* (test connection) and save.
+  `localhost`) and the token, then click *Test connection* and save.
 
 ## Usage
 
-The extension's user interface is currently German.
+The extension's user interface is English or German, following the browser's language.
 
 * **Button in e-mail fields:** it opens a panel with the suggested shop name (`checkout.gardenshop.example` →
-  `gardenshop`), the domain choice and the **existing addresses for this shop**. *Neue Adresse erzeugen*
+  `gardenshop`), the domain choice and the **existing addresses for this shop**. *Create new address*
   creates an identity and fills the field, including “repeat e-mail” fields.
 * **Toolbar popup** (on Firefox for Android in the menu under *Extensions*): the same functions. It
   fills the focused field (otherwise the most likely e-mail field) and, unless switched off in the
@@ -111,7 +111,8 @@ extension needs:
   * `POST /v1/identities` with JSON `{"shop", "domain"}` (`domain` optional) → 201 with the new
     identity `{"id", "email", "shop", ...}`
 * Authentication with `Authorization: Bearer <token>`; errors as `application/problem+json` with a
-  `code` (the extension shows German texts for the codes listed in the OpenAPI description).
+  `code` (the extension shows its own texts for the codes listed in the OpenAPI description, otherwise
+  the problem's `detail`).
 * Optional token rotation: send `Identity-Api-Token-Rotate: true` when a token should be renewed,
   and offer `POST /v1/token/rotate` and `GET /v1/token`. A server that never sends `true` doesn't
   need them.
@@ -134,7 +135,7 @@ extension/           browser extension, Firefox and Chromium
 scripts/             build of the Chromium variant
 tests/               tests against Roundcube with the plugin: API client (rotation-client.js) and
                      end-to-end test of the Chrome extension (e2e/), started by client.sh
-store/               screenshots for the store listings
+store/               screenshots for the store listings (German, English in screenshots-en/)
 docs/                publishing in the stores
 ```
 

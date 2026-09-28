@@ -1,6 +1,8 @@
 'use strict';
 
 const $ = (id) => document.getElementById(id);
+const t = rcidT;
+rcidLocalize(document);
 const ALL_SITES = { origins: ['<all_urls>'] };
 
 function status(id, text, kind) {
@@ -21,7 +23,7 @@ function formSettings() {
 
 function setDomains(domains, selected) {
   const sel = $('defaultDomain');
-  sel.replaceChildren(new Option('(Server-Standard)', ''));
+  sel.replaceChildren(new Option(t('serverDefault'), ''));
   for (const d of domains) {
     sel.append(new Option('@' + d, d));
   }
@@ -42,14 +44,14 @@ async function test() {
   try {
     s = formSettings();
   } catch (e) {
-    status('test-status', 'Ungültige URL.', 'error');
+    status('test-status', t('invalidUrl'), 'error');
     return;
   }
-  status('test-status', 'Teste …');
+  status('test-status', t('testing'));
   try {
     const info = await RcApi.info(Object.assign({}, RcApi.DEFAULTS, s), { rotate: false });
     setDomains(info.domains, $('defaultDomain').value);
-    status('test-status', `Verbunden als ${info.user}. Domains: ${info.domains.join(', ')}.`, 'ok');
+    status('test-status', t('connectedAs', [info.user, info.domains.join(', ')]), 'ok');
   } catch (e) {
     status('test-status', e.message, 'error');
   }
@@ -61,11 +63,11 @@ async function save(e) {
   try {
     s = formSettings();
   } catch (err) {
-    status('save-status', 'Ungültige URL.', 'error');
+    status('save-status', t('invalidUrl'), 'error');
     return;
   }
   if (s.apiUrl && !RcApi.isSecureUrl(s.apiUrl)) {
-    status('save-status', 'Die API-URL muss mit https:// beginnen, sonst würde das Token unverschlüsselt übertragen.', 'error');
+    status('save-status', t('httpsRequiredToken'), 'error');
     return;
   }
   // a pending rotated token belongs to the old connection only
@@ -73,7 +75,7 @@ async function save(e) {
   const changed = old.apiUrl !== s.apiUrl || old.token !== s.token;
   await browser.storage.local.set(Object.assign(changed ? { pending: null, connectedUser: '' } : {}, s));
   $('apiUrl').value = s.apiUrl;
-  status('save-status', 'Gespeichert.', 'ok');
+  status('save-status', t('saved'), 'ok');
   test();
 }
 
@@ -85,7 +87,7 @@ function renderOverrides(overrides) {
     const tr = document.createElement('tr');
     const btn = document.createElement('button');
     btn.type = 'button';
-    btn.textContent = 'Entfernen';
+    btn.textContent = t('remove');
     btn.addEventListener('click', async () => {
       const { overrides: current } = await browser.storage.local.get({ overrides: {} });
       delete current[site];
@@ -120,7 +122,7 @@ function renderLearned(learnedFields) {
     }
     const btn = document.createElement('button');
     btn.type = 'button';
-    btn.textContent = 'Entfernen';
+    btn.textContent = t('remove');
     btn.addEventListener('click', async () => {
       const { learnedFields: current } = await browser.storage.local.get({ learnedFields: {} });
       current[site] = (current[site] || []).filter((s) => s !== sig);

@@ -62,22 +62,13 @@
     return u.toString();
   }
 
-  // error codes of the REST API (docs/openapi.yaml of the plugin)
-  const ERRORS = {
-    unauthorized: 'Token ungültig, widerrufen oder abgelaufen.',
-    domain_not_allowed: 'Diese Domain ist auf dem Server nicht freigegeben.',
-    shop_missing: 'Bitte einen Shop-Namen angeben.',
-    invalid_shop: 'Ungültiger Shop-Name.',
-    identity_limit_reached: 'Maximale Anzahl an Identitäten erreicht.',
-    rate_limit_exceeded: 'Zu viele neue Adressen in kurzer Zeit. Bitte später erneut versuchen.',
-    address_too_long: 'Adresse zu lang. Bitte einen kürzeren Shop-Namen verwenden.',
-    identities_disabled: 'Zusätzliche Identitäten sind auf diesem Server nicht erlaubt.',
-    not_found: 'Nicht gefunden (Adresse gelöscht oder falsche API-URL).',
-    delete_failed: 'Die Adresse konnte nicht gelöscht werden.',
-    static_token: 'Dieses Token wird nicht erneuert.',
-    no_domain_configured: 'Auf dem Server ist keine Domain für neue Adressen eingerichtet.',
-    saving_failed: 'Speichern auf dem Server fehlgeschlagen.',
-  };
+  // translated texts (lib/compat.js); the key itself without it (tests)
+  const t = (key, subs) => (root.rcidT ? root.rcidT(key, subs) : key);
+
+  // error codes of the REST API (docs/openapi.yaml of the plugin) with a text as err_<code>
+  const ERRORS = new Set(['unauthorized', 'domain_not_allowed', 'shop_missing', 'invalid_shop',
+    'identity_limit_reached', 'rate_limit_exceeded', 'address_too_long', 'identities_disabled', 'not_found',
+    'delete_failed', 'static_token', 'no_domain_configured', 'saving_failed']);
 
   /** The token must never travel unencrypted (localhost excepted, for testing). */
   function isSecureUrl(url) {
@@ -91,10 +82,10 @@
    */
   async function request(path, { method = 'GET', params, body, settings }) {
     if (!settings.apiUrl || !settings.token) {
-      throw new ApiError('Erweiterung ist noch nicht eingerichtet (API-URL und Token in den Einstellungen).', -1);
+      throw new ApiError(t('notConfigured'), -1);
     }
     if (!isSecureUrl(settings.apiUrl)) {
-      throw new ApiError('Die API-URL muss mit https:// beginnen.', -1);
+      throw new ApiError(t('httpsRequired'), -1);
     }
 
     const ctrl = new AbortController();
@@ -114,17 +105,13 @@
       try {
         res = await fetch(endpoint(settings.apiUrl, path, params), init);
       } catch (e) {
-        throw new ApiError(e.name === 'AbortError'
-          ? 'Zeitüberschreitung beim Mailserver.'
-          : 'Mailserver nicht erreichbar (' + e.message + ').');
+        throw new ApiError(e.name === 'AbortError' ? t('timeout') : t('unreachable', e.message));
       }
       if (res.status !== 204) {
         try {
           data = await res.json(); // the timeout covers the body too
         } catch (e) {
-          throw new ApiError(e.name === 'AbortError'
-            ? 'Zeitüberschreitung beim Mailserver.'
-            : 'Keine gültige API-Antwort (HTTP ' + res.status + '). Stimmt die API-URL (bei Roundcube unter Einstellungen → Einstellungen → Shop-Adressen-API angezeigt)?', res.status);
+          throw new ApiError(e.name === 'AbortError' ? t('timeout') : t('invalidResponse', res.status), res.status);
         }
       }
     } finally {
@@ -134,7 +121,7 @@
     if (!res.ok) {
       // RFC 9457 problem details with a machine readable "code"
       const code = (data && typeof data.code === 'string' && data.code) || ('http_' + res.status);
-      const text = Object.prototype.hasOwnProperty.call(ERRORS, code) ? ERRORS[code] : 'Serverfehler: ' + ((data && data.detail) || code);
+      const text = ERRORS.has(code) ? t('err_' + code) : t('serverError', String((data && data.detail) || code));
       throw new ApiError(text, res.status, code);
     }
 

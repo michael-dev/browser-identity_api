@@ -1,72 +1,68 @@
 <!doctype html>
-<html lang="de">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Shop-Adressen – Einstellungen</title>
+  <title data-i18n="optionsTitle"></title>
   <link rel="stylesheet" href="options.css">
 </head>
 <body>
   <main>
-    <h1>Shop-Adressen – Einstellungen</h1>
+    <h1 data-i18n="optionsTitle"></h1>
 
     <section id="permission" class="warn" hidden>
-      <p>Die Erweiterung benötigt Zugriff auf Webseiten, um E-Mail-Felder auszufüllen und deinen Mailserver zu erreichen.</p>
-      <button id="grant" type="button">Zugriff erlauben</button>
+      <p data-i18n="permissionNeeded"></p>
+      <button id="grant" type="button" data-i18n="grantAccess"></button>
     </section>
 
     <form id="form">
-      <h2>Verbindung zum Mailserver</h2>
-      <p class="hint">Die Erweiterung arbeitet mit jedem Mailserver, der die Shop-Adressen-API anbietet, z. B. Roundcube mit
-        dem Plugin identity_api. Am einfachsten verbindest du sie direkt im Webmail (bei Roundcube: <em>Einstellungen → Einstellungen → Shop-Adressen-API</em>: Gerätenamen
-        eingeben, speichern und auf <em>„Mit Browser-Erweiterung verbinden“</em> klicken). Alternativ hier API-URL und
-        Token eintragen.</p>
-      <label for="apiUrl">API-URL</label>
+      <h2 data-i18n="connectionHeading"></h2>
+      <p class="hint" data-i18n="connectionHint"></p>
+      <label for="apiUrl" data-i18n="apiUrl"></label>
       <input id="apiUrl" type="url" placeholder="https://webmail.example.org/api/identity/" required autocomplete="off">
-      <p class="hint">Die URL der Shop-Adressen-API deines Mailservers (bei Roundcube: <em>Einstellungen → Einstellungen → Shop-Adressen-API</em>, Abschnitt „Verbindung“).</p>
+      <p class="hint" data-i18n="apiUrlHint"></p>
 
-      <label for="token">API-Token</label>
+      <label for="token" data-i18n="apiToken"></label>
       <input id="token" type="password" required autocomplete="off" spellcheck="false">
-      <p class="hint">Ein Token pro Gerät, erzeugt auf deinem Mailserver (bei Roundcube: <em>Einstellungen → Einstellungen → Shop-Adressen-API</em>).</p>
+      <p class="hint" data-i18n="tokenHint"></p>
 
       <div class="actions">
-        <button id="test" type="button">Verbindung testen</button>
+        <button id="test" type="button" data-i18n="testConnection"></button>
       </div>
       <p id="test-status" class="status"></p>
 
-      <label for="defaultDomain">Standard-Domain</label>
-      <select id="defaultDomain"><option value="">(Server-Standard)</option></select>
+      <label for="defaultDomain" data-i18n="defaultDomain"></label>
+      <select id="defaultDomain"><option value="" data-i18n="serverDefault"></option></select>
 
-      <h2>Verhalten</h2>
-      <label class="check"><input id="inlineButton" type="checkbox"> Button in E-Mail-Feldern anzeigen</label>
-      <label class="check"><input id="fillConfirm" type="checkbox"> Bestätigungsfelder („E-Mail wiederholen“) mitfüllen</label>
-      <label class="check"><input id="copyToClipboard" type="checkbox"> Adresse beim Einfügen über das Popup zusätzlich kopieren</label>
+      <h2 data-i18n="behaviour"></h2>
+      <label class="check"><input id="inlineButton" type="checkbox"> <span data-i18n="optInlineButton"></span></label>
+      <label class="check"><input id="fillConfirm" type="checkbox"> <span data-i18n="optFillConfirm"></span></label>
+      <label class="check"><input id="copyToClipboard" type="checkbox"> <span data-i18n="optCopy"></span></label>
 
       <div class="actions">
-        <button id="save" class="primary" type="submit">Speichern</button>
+        <button id="save" class="primary" type="submit" data-i18n="save"></button>
       </div>
       <p id="save-status" class="status"></p>
     </form>
 
     <section>
-      <h2>Gemerkte Shop-Namen</h2>
-      <p class="hint">Wenn du den vorgeschlagenen Shop-Namen änderst, merkt sich die Erweiterung den Namen für diese Website.</p>
+      <h2 data-i18n="overridesHeading"></h2>
+      <p class="hint" data-i18n="overridesHint"></p>
       <table id="overrides">
-        <thead><tr><th>Website</th><th>Shop-Name</th><th></th></tr></thead>
+        <thead><tr><th data-i18n="website"></th><th data-i18n="shopName"></th><th></th></tr></thead>
         <tbody></tbody>
       </table>
-      <p id="no-overrides" class="hint">Keine Einträge.</p>
+      <p id="no-overrides" class="hint" data-i18n="noEntries"></p>
     </section>
 
     <section>
-      <h2>Gemerkte E-Mail-Felder</h2>
-      <p class="hint">Felder, die nicht als E-Mail-Feld erkennbar sind, in die du aber über Popup oder
-        Kontextmenü eine Adresse eingefügt hast. Dort erscheint der Button künftig automatisch.</p>
+      <h2 data-i18n="learnedHeading"></h2>
+      <p class="hint" data-i18n="learnedHint"></p>
       <table id="learned">
-        <thead><tr><th>Website</th><th>Feld</th><th></th></tr></thead>
+        <thead><tr><th data-i18n="website"></th><th data-i18n="field"></th><th></th></tr></thead>
         <tbody></tbody>
       </table>
-      <p id="no-learned" class="hint">Keine Einträge.</p>
+      <p id="no-learned" class="hint" data-i18n="noEntries"></p>
     </section>
   </main>
   <script src="../lib/compat.js"></script>

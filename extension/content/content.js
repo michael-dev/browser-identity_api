@@ -6,6 +6,7 @@
   const EMAIL_HINT = /e-?mail|mail[-_ ]?addr|\bmail\b|courriel|correo|posta elettronica|emailadres|e-?post\b|sähköposti/i;
   const CONFIRM_HINT = /confirm|repeat|retype|verif|again|wiederhol|bestaetig|bestätig|kontroll|[-_]?2$/i;
   const TEXT_TYPES = new Set(['text', 'email', 'search', '']);
+  const t = rcidT;
 
   let settings = null; // lazily loaded, see loadSettings()
   let lastInput = null; // last focused recognized e-mail field
@@ -19,7 +20,7 @@
   // Field detection
 
   const text = (node) => (node && node.textContent ? node.textContent.replace(/\s+/g, ' ').trim() : '');
-  const shortText = (node) => { const t = text(node); return t.length <= 80 ? t : ''; };
+  const shortText = (node) => { const s = text(node); return s.length <= 80 ? s : ''; };
   const FIELDS = 'input, select, textarea';
 
   function describe(el) {
@@ -315,7 +316,7 @@
     const root = host.attachShadow({ mode: 'closed' });
     root.append(el('style', { text: CSS }));
 
-    const button = el('button', { class: 'btn', type: 'button', title: 'Shop-Adresse erzeugen / wählen' });
+    const button = el('button', { class: 'btn', type: 'button', title: t('buttonTitle') });
     button.append(icon());
     button.hidden = true;
     // keep focus in the page input
@@ -394,9 +395,9 @@
 
   function toast(text) {
     const u = ensureUi();
-    const t = el('div', { class: 'toast', text });
-    u.root.append(t);
-    setTimeout(() => t.remove(), 4000);
+    const node = el('div', { class: 'toast', text });
+    u.root.append(node);
+    setTimeout(() => node.remove(), 4000);
   }
 
   async function openPanel(input) {
@@ -404,7 +405,7 @@
       input = findBestInput();
     }
     if (!input) {
-      toast('Kein E-Mail-Feld gefunden.');
+      toast(t('noEmailField'));
       return;
     }
     const u = ensureUi();
@@ -412,16 +413,16 @@
     panelInput = input;
     await loadSettings().catch(() => {});
 
-    const status = el('div', { class: 'status', text: 'Lade …' });
-    const shopInput = el('input', { type: 'text', placeholder: 'Shop-Name', autocomplete: 'off', spellcheck: 'false' });
+    const status = el('div', { class: 'status', text: t('loading') });
+    const shopInput = el('input', { type: 'text', placeholder: t('shopName'), autocomplete: 'off', spellcheck: 'false' });
     const domainSelect = el('select', {});
     domainSelect.hidden = true;
-    const createBtn = el('button', { class: 'primary', type: 'button', text: 'Neue Adresse erzeugen' });
+    const createBtn = el('button', { class: 'primary', type: 'button', text: t('createNew') });
     const list = el('div', { class: 'list' });
     const panel = el('div', { class: 'panel', role: 'dialog' }, [
       el('div', { class: 'head' }, [
-        el('span', { text: 'Shop-Adresse' }),
-        el('button', { class: 'close', type: 'button', title: 'Schließen', text: '×', onclick: closePanel }),
+        el('span', { text: t('shopAddress') }),
+        el('button', { class: 'close', type: 'button', title: t('close'), text: '×', onclick: closePanel }),
       ]),
       el('div', { class: 'row' }, [shopInput, domainSelect]),
       createBtn,
@@ -448,21 +449,21 @@
       if (!usable(input)) {
         // the page replaced the field meanwhile
         closePanel();
-        toast(`${email} erzeugt – das Feld gibt es nicht mehr, bitte über das Symbol der Erweiterung einfügen.`);
+        toast(t('fieldGone', email));
         return;
       }
       learn(input, true);
       const n = fill(input, email);
       closePanel();
-      toast(n > 1 ? `${email} eingefügt (${n} Felder)` : `${email} eingefügt`);
+      toast(n > 1 ? t('insertedEmailFields', [email, n]) : t('insertedEmail', email));
     };
     // the extension may have been updated or reloaded meanwhile
-    const ask = (msg) => browser.runtime.sendMessage(msg).catch((e) => ({ ok: false, error: 'Erweiterung nicht erreichbar (' + e.message + '). Bitte die Seite neu laden.' }));
+    const ask = (msg) => browser.runtime.sendMessage(msg).catch((e) => ({ ok: false, error: t('extUnreachable', e.message) }));
 
     const renderList = (identities) => {
       list.replaceChildren();
       if (identities && identities.length) {
-        list.append(el('div', { class: 'title', text: 'Vorhandene Adressen für diesen Shop:' }));
+        list.append(el('div', { class: 'title', text: t('existingForShopColon') }));
         for (const id of identities) {
           list.append(el('button', { class: 'item', type: 'button', title: id.email, text: id.email, onclick: () => use(id.email) }));
         }
@@ -489,31 +490,31 @@
     createBtn.addEventListener('click', async () => {
       const shop = shopInput.value.trim();
       if (!RcShop.sanitize(shop)) {
-        setStatus('Bitte einen Shop-Namen angeben.', true);
+        setStatus(t('enterShop'), true);
         return;
       }
       createBtn.disabled = true;
-      setStatus('Erzeuge Adresse …');
+      setStatus(t('creating'));
       const res = await ask({ type: 'create', shop, domain: domainSelect.value });
       createBtn.disabled = false;
       if (res && res.ok) {
         use(res.data.email);
       } else {
-        setStatus(res ? res.error : 'Unbekannter Fehler', true);
+        setStatus(res ? res.error : t('unknownError'), true);
       }
     });
 
     const res = await ask({ type: 'context' });
     if (!res || !res.ok) {
-      setStatus(res ? res.error : 'Unbekannter Fehler', true);
+      setStatus(res ? res.error : t('unknownError'), true);
       return;
     }
     const ctx = res.data;
     if (!ctx.configured) {
       setStatus('');
       createBtn.disabled = true;
-      status.append('Noch nicht eingerichtet: im Webmail ein Token erzeugen (bei Roundcube: Einstellungen → Einstellungen → Shop-Adressen-API) und „Mit Browser-Erweiterung verbinden“ wählen, oder ',
-        el('a', { text: 'manuell einrichten', onclick: () => browser.runtime.sendMessage({ type: 'openOptions' }) }), '.');
+      status.append(t('panelNotConfigured'),
+        el('a', { text: t('setupManuallyLink'), onclick: () => browser.runtime.sendMessage({ type: 'openOptions' }) }), '.');
       return;
     }
     shopInput.value = ctx.shop;
@@ -590,12 +591,12 @@
     const hint = box.querySelector('.hint');
     const say = (text) => { if (hint) hint.textContent = text; };
 
-    say('Prüfe …');
+    say(t('checking'));
     const res = await browser.runtime.sendMessage({ type: 'connectOffer', token: box.dataset.token, api: box.dataset.api })
       .catch((err) => ({ ok: false, error: err.message }));
     say(res && res.ok
-      ? 'Bitte die Verbindung im neu geöffneten Tab der Erweiterung bestätigen.'
-      : (res ? res.error : 'Unbekannter Fehler'));
+      ? t('confirmInTab')
+      : (res ? res.error : t('unknownError')));
   }, true);
 
   // -------------------------------------------------------------------------
@@ -621,7 +622,7 @@
         learn(target, msg.targetElementId !== undefined);
         const filled = fill(target, msg.email);
         if (msg.targetElementId !== undefined) {
-          toast(`${msg.email} eingefügt`);
+          toast(t('insertedEmail', msg.email));
         }
         return Promise.resolve({ filled });
       }

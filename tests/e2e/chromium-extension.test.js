@@ -6,6 +6,9 @@ const { chromium } = require('playwright');
 const [ext, rcUrl, shopPort, user, work] = process.argv.slice(2);
 // SCREENSHOTS=<dir>: also take the screenshots for the store listings (1280x800)
 const shots = process.env.SCREENSHOTS;
+// E2E_LANG=en-US: the extension's English user interface (default German)
+const lang = process.env.E2E_LANG || 'de-DE';
+const german = lang.startsWith('de');
 const fs = require('fs');
 const path = require('path');
 const shot = async (page, name) => {
@@ -23,8 +26,10 @@ const check = (name, cond, extra = '') => {
 let ctx;
 (async () => {
   ctx = await chromium.launchPersistentContext(`${work}/chromium-profile`, {
-    channel: 'chromium', headless: true, viewport: { width: 1280, height: 800 }, locale: 'de-DE',
-    args: [`--disable-extensions-except=${ext}`, `--load-extension=${ext}`,
+    channel: 'chromium', headless: true, viewport: { width: 1280, height: 800 }, locale: lang,
+    // the extension's language follows the browser's (on Linux from LANGUAGE)
+    env: Object.assign({}, process.env, { LANGUAGE: lang.replace('-', '_') }),
+    args: [`--lang=${lang}`, `--disable-extensions-except=${ext}`, `--load-extension=${ext}`,
       `--host-resolver-rules=MAP www.test-shop.example 127.0.0.1:${shopPort}, MAP www.gartenparadies.example 127.0.0.1:${shopPort}`],
   });
   let [sw] = ctx.serviceWorkers();
@@ -121,9 +126,9 @@ let ctx;
   // options page
   const opt = await ctx.newPage();
   await opt.goto(`chrome-extension://${extId}/options/options.html`);
-  await opt.waitForFunction(() => /Verbunden|Fehler|nicht|ungültig/.test(document.querySelector('#test-status').textContent),
+  await opt.waitForFunction(() => /Verbunden|Fehler|nicht|ungültig|Connected|error|not|invalid/i.test(document.querySelector('#test-status').textContent),
     null, { timeout: 15000 }).catch(() => {});
-  check('options: connection test', (await opt.textContent('#test-status')).includes(`Verbunden als ${user}`),
+  check('options: connection test', (await opt.textContent('#test-status')).includes(`${german ? 'Verbunden als' : 'Connected as'} ${user}`),
     await opt.textContent('#test-status'));
 
   if (shots) {

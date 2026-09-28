@@ -1,6 +1,8 @@
 'use strict';
 
 const $ = (id) => document.getElementById(id);
+const t = rcidT;
+rcidLocalize(document);
 let tab = null;
 let settings = { copyToClipboard: true };
 let template = '';
@@ -14,7 +16,7 @@ function setStatus(text, kind) {
 async function send(msg) {
   const res = await browser.runtime.sendMessage(msg);
   if (!res || !res.ok) {
-    throw new Error(res ? res.error : 'Keine Antwort von der Erweiterung.');
+    throw new Error(res ? res.error : t('noAnswer'));
   }
   return res.data;
 }
@@ -75,12 +77,12 @@ async function use(email) {
   const filled = await insert(email);
   const copied = settings.copyToClipboard ? await copy(email) : false;
   if (filled) {
-    setStatus(`Eingefügt${filled > 1 ? ` (${filled} Felder)` : ''}${copied ? ' und kopiert' : ''}.`, 'ok');
+    const key = (filled > 1 ? 'insertedFields' : 'inserted') + (copied ? 'Copied' : '');
+    setStatus(t(key, filled), 'ok');
     // on Android the popup covers the page, close it to show the result
     setTimeout(() => window.close(), 900);
   } else {
-    setStatus(copied ? 'Kein Eingabefeld gefunden – Adresse wurde in die Zwischenablage kopiert.'
-      : 'Kein Eingabefeld gefunden.', copied ? 'ok' : 'error');
+    setStatus(t(copied ? 'noFieldCopied' : 'noField'), copied ? 'ok' : 'error');
   }
 }
 
@@ -94,12 +96,12 @@ function renderList(identities) {
     code.title = id.email;
     const insertBtn = document.createElement('button');
     insertBtn.type = 'button';
-    insertBtn.textContent = 'Einfügen';
+    insertBtn.textContent = t('insert');
     insertBtn.addEventListener('click', () => use(id.email));
     const copyBtn = document.createElement('button');
     copyBtn.type = 'button';
-    copyBtn.textContent = 'Kopieren';
-    copyBtn.addEventListener('click', async () => setStatus((await copy(id.email)) ? 'Kopiert.' : 'Kopieren fehlgeschlagen.'));
+    copyBtn.textContent = t('copy');
+    copyBtn.addEventListener('click', async () => setStatus(t((await copy(id.email)) ? 'copied' : 'copyFailed')));
     li.append(code, insertBtn, copyBtn);
     ul.append(li);
   }
@@ -134,7 +136,7 @@ async function create() {
   const shop = $('shop').value.trim();
   if (!RcShop.sanitize(shop) || $('create').disabled) return;
   $('create').disabled = true;
-  setStatus('Erzeuge Adresse …');
+  setStatus(t('creating'));
   try {
     const identity = await send({ type: 'create', shop, domain: $('domain').value, url: tab && tab.url });
     $('result-email').textContent = identity.email;
@@ -153,7 +155,7 @@ async function init() {
   $('setup').addEventListener('click', () => browser.runtime.openOptionsPage().then(() => window.close()));
   $('create').addEventListener('click', create);
   $('result-copy').addEventListener('click', async () =>
-    setStatus((await copy($('result-email').textContent)) ? 'Kopiert.' : 'Kopieren fehlgeschlagen.'));
+    setStatus(t((await copy($('result-email').textContent)) ? 'copied' : 'copyFailed')));
   $('shop').addEventListener('input', () => { updatePreview(); refreshList(); });
   $('shop').addEventListener('keydown', (e) => { if (e.key === 'Enter') create(); });
   $('domain').addEventListener('change', updatePreview);
@@ -166,7 +168,7 @@ async function init() {
     return;
   }
   $('main').hidden = false;
-  setStatus('Lade …');
+  setStatus(t('loading'));
 
   const ctx = await send({ type: 'context', url: tab ? tab.url : '' });
   $('shop').value = ctx.shop;
@@ -185,7 +187,7 @@ async function init() {
   prefix = ctx.prefix;
   renderList(ctx.identities);
   updatePreview();
-  setStatus(ctx.error || (ctx.shop ? '' : 'Shop-Name bitte eingeben.'), ctx.error ? 'error' : '');
+  setStatus(ctx.error || (ctx.shop ? '' : t('enterShop')), ctx.error ? 'error' : '');
   // focus the button (Enter creates), avoids popping up the keyboard on Android
   $('create').focus();
 }

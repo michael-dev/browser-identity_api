@@ -36,6 +36,28 @@
     });
   };
 
+  /** Translated text from _locales/<lang>/messages.json; subs fill $1, $2, ... */
+  g.rcidT = function (key, subs) {
+    const i18n = g.browser && g.browser.i18n;
+    return (i18n && i18n.getMessage(key, subs === undefined ? undefined : [].concat(subs).map(String))) || key;
+  };
+
+  /**
+   * Translates an extension page: data-i18n (text), data-i18n-title,
+   * data-i18n-placeholder (attributes); sets <html lang>.
+   */
+  g.rcidLocalize = function (doc) {
+    doc.documentElement.lang = g.rcidT('@@ui_locale').replace('_', '-');
+    for (const el of doc.querySelectorAll('[data-i18n]')) {
+      el.textContent = g.rcidT(el.dataset.i18n);
+    }
+    for (const attr of ['title', 'placeholder']) {
+      for (const el of doc.querySelectorAll(`[data-i18n-${attr}]`)) {
+        el.setAttribute(attr, g.rcidT(el.getAttribute(`data-i18n-${attr}`)));
+      }
+    }
+  };
+
   /** Open or closed shadow root of a web component (extensions may see closed ones). */
   g.rcidShadowRoot = function (el) {
     if (el.openOrClosedShadowRoot) {

@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+* **English user interface:** the extension follows the browser's language (English or German;
+  `extension/_locales`). Name in English: “Shop Addresses”. The end-to-end test runs in either
+  language (`E2E_LANG`), English store screenshots are in `store/screenshots-en/`.
+
 ## 2.3
 
 * **Published on addons.mozilla.org:** <https://addons.mozilla.org/firefox/addon/shop-adressen/>

@@ -1,9 +1,10 @@
 {
   "manifest_version": 3,
-  "name": "Shop-Adressen",
-  "short_name": "Shop-Adressen",
+  "name": "__MSG_extName__",
+  "short_name": "__MSG_extName__",
   "version": "1.0",
-  "description": "Erzeugt im Bestellformular eine eigene E-Mail-Adresse pro Shop über die Shop-Adressen-API deines Mailservers.",
+  "description": "__MSG_extDescription__",
+  "default_locale": "en",
   "homepage_url": "https://github.com/michael-dev/browser-identity_api",
   "icons": {
     "16": "icons/icon-16.png",
@@ -44,7 +45,7 @@
     ]
   },
   "action": {
-    "default_title": "Shop-Adresse erzeugen",
+    "default_title": "__MSG_actionTitle__",
     "default_popup": "popup/popup.html",
     "default_icon": {
       "16": "icons/icon-16.png",

@@ -1,42 +1,41 @@
 <!doctype html>
-<html lang="de">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Shop-Adresse</title>
+  <title data-i18n="shopAddress"></title>
   <link rel="stylesheet" href="popup.css">
 </head>
 <body>
   <header>
-    <h1>Shop-Adresse</h1>
-    <button id="options" class="link" type="button" title="Einstellungen">⚙</button>
+    <h1 data-i18n="shopAddress"></h1>
+    <button id="options" class="link" type="button" data-i18n-title="settings">⚙</button>
   </header>
 
   <section id="unconfigured" hidden>
-    <p>Die Erweiterung ist noch nicht mit deinem Mailserver verbunden.</p>
-    <p class="hint">Am einfachsten im Webmail (bei Roundcube: <em>Einstellungen → Einstellungen → Shop-Adressen-API</em>) einen Gerätenamen eingeben,
-      speichern und dann auf <em>„Mit Browser-Erweiterung verbinden“</em> klicken.</p>
-    <button id="setup" class="primary" type="button">Manuell einrichten</button>
+    <p data-i18n="notConnected"></p>
+    <p class="hint" data-i18n="connectHowto"></p>
+    <button id="setup" class="primary" type="button" data-i18n="setupManually"></button>
   </section>
 
   <section id="main" hidden>
-    <label for="shop">Shop</label>
+    <label for="shop" data-i18n="shop"></label>
     <div class="row">
-      <input id="shop" type="text" autocomplete="off" spellcheck="false" placeholder="z. B. buchladen">
+      <input id="shop" type="text" autocomplete="off" spellcheck="false" data-i18n-placeholder="shopPlaceholder">
       <select id="domain" hidden></select>
     </div>
     <p id="preview" class="hint"></p>
-    <button id="create" class="primary" type="button">Neue Adresse erzeugen &amp; einfügen</button>
+    <button id="create" class="primary" type="button" data-i18n="createAndInsert"></button>
 
     <div id="result" hidden>
       <div class="email-row">
         <code id="result-email"></code>
-        <button id="result-copy" type="button">Kopieren</button>
+        <button id="result-copy" type="button" data-i18n="copy"></button>
       </div>
     </div>
 
     <div id="existing" hidden>
-      <h2>Vorhandene Adressen für diesen Shop</h2>
+      <h2 data-i18n="existingForShop"></h2>
       <ul id="list"></ul>
     </div>
   </section>

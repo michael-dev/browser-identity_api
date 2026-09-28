@@ -2,6 +2,8 @@
 'use strict';
 
 const $ = (id) => document.getElementById(id);
+const t = rcidT;
+rcidLocalize(document);
 const id = location.hash.slice(1);
 
 // text from the server: no control characters (fake line breaks), limited length
@@ -24,7 +26,7 @@ async function closeTab() {
 async function load() {
   const res = await browser.runtime.sendMessage({ type: 'connectDetails', id });
   if (!res || !res.ok) {
-    status(res ? res.error : 'Unbekannter Fehler', 'error');
+    status(res ? res.error : t('unknownError'), 'error');
     return;
   }
   const d = res.data;
@@ -35,14 +37,14 @@ async function load() {
 
   const warnings = [];
   if (d.previousUrl && new URL(d.previousUrl).origin !== url.origin) {
-    warnings.push(`Die Erweiterung ist bisher mit ${new URL(d.previousUrl).host} verbunden. Diese Verbindung wird ersetzt.`);
+    warnings.push(t('warnReplaceServer', new URL(d.previousUrl).host));
   } else if (d.previousUrl && d.previousUser && d.previousUser !== d.user) {
-    warnings.push(`Anderes Konto: bisher ${clean(d.previousUser)}, neu ${clean(d.user)}.`);
+    warnings.push(t('warnOtherAccount', [clean(d.previousUser), clean(d.user)]));
   } else if (d.previousUrl) {
-    warnings.push('Das bisherige Token wird durch das neue ersetzt.');
+    warnings.push(t('warnReplaceToken'));
   }
   if (url.protocol !== 'https:') {
-    warnings.push('Unverschlüsselte Verbindung (nur für Tests auf localhost).');
+    warnings.push(t('warnInsecure'));
   }
   $('warning').textContent = warnings.join(' ');
   $('warning').hidden = !warnings.length;
@@ -57,10 +59,10 @@ $('confirm').addEventListener('click', async () => {
   const res = await browser.runtime.sendMessage({ type: 'connectConfirm', id });
   $('details').hidden = true;
   if (res && res.ok) {
-    status(`Verbunden mit ${new URL(res.data.url).host} (${clean(res.data.user)}). Du kannst jetzt in Bestellformularen Shop-Adressen erzeugen.`, 'ok');
+    status(t('connectedTo', [new URL(res.data.url).host, clean(res.data.user)]), 'ok');
     setTimeout(closeTab, 2500);
   } else {
-    status(res ? res.error : 'Unbekannter Fehler', 'error');
+    status(res ? res.error : t('unknownError'), 'error');
   }
 });
 

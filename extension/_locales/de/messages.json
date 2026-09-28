@@ -1,0 +1,352 @@
+{
+  "extName": {
+    "message": "Shop-Adressen",
+    "description": "Name of the extension"
+  },
+  "extDescription": {
+    "message": "Erzeugt im Bestellformular eine eigene E-Mail-Adresse pro Shop über die Shop-Adressen-API deines Mailservers.",
+    "description": "Extension description"
+  },
+  "actionTitle": {
+    "message": "Shop-Adresse erzeugen",
+    "description": "Toolbar button tooltip"
+  },
+  "shopAddress": {
+    "message": "Shop-Adresse",
+    "description": "Title of popup and panel"
+  },
+  "settings": {
+    "message": "Einstellungen"
+  },
+  "notConnected": {
+    "message": "Die Erweiterung ist noch nicht mit deinem Mailserver verbunden."
+  },
+  "connectHowto": {
+    "message": "Am einfachsten im Webmail (bei Roundcube: Einstellungen → Einstellungen → Shop-Adressen-API) einen Gerätenamen eingeben, speichern und dann auf „Mit Browser-Erweiterung verbinden“ klicken."
+  },
+  "setupManually": {
+    "message": "Manuell einrichten"
+  },
+  "shop": {
+    "message": "Shop",
+    "description": "Label of the shop name field"
+  },
+  "shopPlaceholder": {
+    "message": "z. B. buchladen"
+  },
+  "createAndInsert": {
+    "message": "Neue Adresse erzeugen & einfügen"
+  },
+  "copy": {
+    "message": "Kopieren"
+  },
+  "insert": {
+    "message": "Einfügen"
+  },
+  "existingForShop": {
+    "message": "Vorhandene Adressen für diesen Shop"
+  },
+  "noAnswer": {
+    "message": "Keine Antwort von der Erweiterung."
+  },
+  "inserted": {
+    "message": "Eingefügt."
+  },
+  "insertedCopied": {
+    "message": "Eingefügt und kopiert."
+  },
+  "insertedFields": {
+    "message": "Eingefügt ($1 Felder).",
+    "description": "$1: number of fields"
+  },
+  "insertedFieldsCopied": {
+    "message": "Eingefügt ($1 Felder) und kopiert.",
+    "description": "$1: number of fields"
+  },
+  "noFieldCopied": {
+    "message": "Kein Eingabefeld gefunden – Adresse wurde in die Zwischenablage kopiert."
+  },
+  "noField": {
+    "message": "Kein Eingabefeld gefunden."
+  },
+  "copied": {
+    "message": "Kopiert."
+  },
+  "copyFailed": {
+    "message": "Kopieren fehlgeschlagen."
+  },
+  "creating": {
+    "message": "Erzeuge Adresse …"
+  },
+  "loading": {
+    "message": "Lade …"
+  },
+  "enterShop": {
+    "message": "Bitte einen Shop-Namen angeben."
+  },
+  "optionsTitle": {
+    "message": "Shop-Adressen – Einstellungen"
+  },
+  "permissionNeeded": {
+    "message": "Die Erweiterung benötigt Zugriff auf Webseiten, um E-Mail-Felder auszufüllen und deinen Mailserver zu erreichen."
+  },
+  "grantAccess": {
+    "message": "Zugriff erlauben"
+  },
+  "connectionHeading": {
+    "message": "Verbindung zum Mailserver"
+  },
+  "connectionHint": {
+    "message": "Die Erweiterung arbeitet mit jedem Mailserver, der die Shop-Adressen-API anbietet, z. B. Roundcube mit dem Plugin identity_api. Am einfachsten verbindest du sie direkt im Webmail (bei Roundcube: Einstellungen → Einstellungen → Shop-Adressen-API: Gerätenamen eingeben, speichern und auf „Mit Browser-Erweiterung verbinden“ klicken). Alternativ hier API-URL und Token eintragen."
+  },
+  "apiUrl": {
+    "message": "API-URL"
+  },
+  "apiUrlHint": {
+    "message": "Die URL der Shop-Adressen-API deines Mailservers (bei Roundcube: Einstellungen → Einstellungen → Shop-Adressen-API, Abschnitt „Verbindung“)."
+  },
+  "apiToken": {
+    "message": "API-Token"
+  },
+  "tokenHint": {
+    "message": "Ein Token pro Gerät, erzeugt auf deinem Mailserver (bei Roundcube: Einstellungen → Einstellungen → Shop-Adressen-API)."
+  },
+  "testConnection": {
+    "message": "Verbindung testen"
+  },
+  "defaultDomain": {
+    "message": "Standard-Domain"
+  },
+  "serverDefault": {
+    "message": "(Server-Standard)"
+  },
+  "behaviour": {
+    "message": "Verhalten"
+  },
+  "optInlineButton": {
+    "message": "Button in E-Mail-Feldern anzeigen"
+  },
+  "optFillConfirm": {
+    "message": "Bestätigungsfelder („E-Mail wiederholen“) mitfüllen"
+  },
+  "optCopy": {
+    "message": "Adresse beim Einfügen über das Popup zusätzlich kopieren"
+  },
+  "save": {
+    "message": "Speichern"
+  },
+  "overridesHeading": {
+    "message": "Gemerkte Shop-Namen"
+  },
+  "overridesHint": {
+    "message": "Wenn du den vorgeschlagenen Shop-Namen änderst, merkt sich die Erweiterung den Namen für diese Website."
+  },
+  "website": {
+    "message": "Website"
+  },
+  "shopName": {
+    "message": "Shop-Name"
+  },
+  "noEntries": {
+    "message": "Keine Einträge."
+  },
+  "learnedHeading": {
+    "message": "Gemerkte E-Mail-Felder"
+  },
+  "learnedHint": {
+    "message": "Felder, die nicht als E-Mail-Feld erkennbar sind, in die du aber über Popup oder Kontextmenü eine Adresse eingefügt hast. Dort erscheint der Button künftig automatisch."
+  },
+  "field": {
+    "message": "Feld"
+  },
+  "remove": {
+    "message": "Entfernen"
+  },
+  "invalidUrl": {
+    "message": "Ungültige URL."
+  },
+  "testing": {
+    "message": "Teste …"
+  },
+  "connectedAs": {
+    "message": "Verbunden als $1. Domains: $2.",
+    "description": "$1: account, $2: domains"
+  },
+  "httpsRequiredToken": {
+    "message": "Die API-URL muss mit https:// beginnen, sonst würde das Token unverschlüsselt übertragen."
+  },
+  "saved": {
+    "message": "Gespeichert."
+  },
+  "connectTitle": {
+    "message": "Shop-Adressen – Verbinden"
+  },
+  "connectHeading": {
+    "message": "Shop-Adressen mit deinem Mailserver verbinden?"
+  },
+  "server": {
+    "message": "Server"
+  },
+  "account": {
+    "message": "Konto"
+  },
+  "connectConfirmHint": {
+    "message": "Nur bestätigen, wenn das die Adresse deines Mailservers ist und du gerade selbst in dessen Einstellungen „Mit Browser-Erweiterung verbinden“ gewählt hast."
+  },
+  "connect": {
+    "message": "Verbinden"
+  },
+  "cancel": {
+    "message": "Abbrechen"
+  },
+  "unknownError": {
+    "message": "Unbekannter Fehler"
+  },
+  "warnReplaceServer": {
+    "message": "Die Erweiterung ist bisher mit $1 verbunden. Diese Verbindung wird ersetzt.",
+    "description": "$1: host"
+  },
+  "warnOtherAccount": {
+    "message": "Anderes Konto: bisher $1, neu $2.",
+    "description": "$1, $2: accounts"
+  },
+  "warnReplaceToken": {
+    "message": "Das bisherige Token wird durch das neue ersetzt."
+  },
+  "warnInsecure": {
+    "message": "Unverschlüsselte Verbindung (nur für Tests auf localhost)."
+  },
+  "connectedTo": {
+    "message": "Verbunden mit $1 ($2). Du kannst jetzt in Bestellformularen Shop-Adressen erzeugen.",
+    "description": "$1: host, $2: account"
+  },
+  "connectFromPageOnly": {
+    "message": "Verbinden ist nur von einer Webseite aus möglich."
+  },
+  "connectOtherServer": {
+    "message": "Die API liegt auf einem anderen Server als die Seite. Bitte URL und Token in den Einstellungen der Erweiterung eintragen."
+  },
+  "invalidToken": {
+    "message": "Ungültiges Token."
+  },
+  "offerExpired": {
+    "message": "Die Anfrage ist abgelaufen. Bitte im Webmail erneut „Mit Browser-Erweiterung verbinden“ wählen."
+  },
+  "menuCreate": {
+    "message": "Neue Shop-Adresse erzeugen und einfügen",
+    "description": "Context menu"
+  },
+  "menuPanel": {
+    "message": "Shop-Adresse auswählen …",
+    "description": "Context menu"
+  },
+  "notifyNoField": {
+    "message": "Neue Adresse $1 – kein Feld zum Einfügen gefunden.",
+    "description": "$1: e-mail address"
+  },
+  "notConfigured": {
+    "message": "Erweiterung ist noch nicht eingerichtet (API-URL und Token in den Einstellungen)."
+  },
+  "httpsRequired": {
+    "message": "Die API-URL muss mit https:// beginnen."
+  },
+  "timeout": {
+    "message": "Zeitüberschreitung beim Mailserver."
+  },
+  "unreachable": {
+    "message": "Mailserver nicht erreichbar ($1).",
+    "description": "$1: error"
+  },
+  "invalidResponse": {
+    "message": "Keine gültige API-Antwort (HTTP $1). Stimmt die API-URL (bei Roundcube unter Einstellungen → Einstellungen → Shop-Adressen-API angezeigt)?",
+    "description": "$1: HTTP status"
+  },
+  "serverError": {
+    "message": "Serverfehler: $1",
+    "description": "$1: detail"
+  },
+  "err_unauthorized": {
+    "message": "Token ungültig, widerrufen oder abgelaufen."
+  },
+  "err_domain_not_allowed": {
+    "message": "Diese Domain ist auf dem Server nicht freigegeben."
+  },
+  "err_shop_missing": {
+    "message": "Bitte einen Shop-Namen angeben."
+  },
+  "err_invalid_shop": {
+    "message": "Ungültiger Shop-Name."
+  },
+  "err_identity_limit_reached": {
+    "message": "Maximale Anzahl an Identitäten erreicht."
+  },
+  "err_rate_limit_exceeded": {
+    "message": "Zu viele neue Adressen in kurzer Zeit. Bitte später erneut versuchen."
+  },
+  "err_address_too_long": {
+    "message": "Adresse zu lang. Bitte einen kürzeren Shop-Namen verwenden."
+  },
+  "err_identities_disabled": {
+    "message": "Zusätzliche Identitäten sind auf diesem Server nicht erlaubt."
+  },
+  "err_not_found": {
+    "message": "Nicht gefunden (Adresse gelöscht oder falsche API-URL)."
+  },
+  "err_delete_failed": {
+    "message": "Die Adresse konnte nicht gelöscht werden."
+  },
+  "err_static_token": {
+    "message": "Dieses Token wird nicht erneuert."
+  },
+  "err_no_domain_configured": {
+    "message": "Auf dem Server ist keine Domain für neue Adressen eingerichtet."
+  },
+  "err_saving_failed": {
+    "message": "Speichern auf dem Server fehlgeschlagen."
+  },
+  "buttonTitle": {
+    "message": "Shop-Adresse erzeugen / wählen",
+    "description": "Tooltip of the button in e-mail fields"
+  },
+  "noEmailField": {
+    "message": "Kein E-Mail-Feld gefunden."
+  },
+  "createNew": {
+    "message": "Neue Adresse erzeugen"
+  },
+  "close": {
+    "message": "Schließen"
+  },
+  "fieldGone": {
+    "message": "$1 erzeugt – das Feld gibt es nicht mehr, bitte über das Symbol der Erweiterung einfügen.",
+    "description": "$1: e-mail address"
+  },
+  "insertedEmail": {
+    "message": "$1 eingefügt",
+    "description": "$1: e-mail address"
+  },
+  "insertedEmailFields": {
+    "message": "$1 eingefügt ($2 Felder)",
+    "description": "$1: e-mail address, $2: number of fields"
+  },
+  "extUnreachable": {
+    "message": "Erweiterung nicht erreichbar ($1). Bitte die Seite neu laden.",
+    "description": "$1: error"
+  },
+  "existingForShopColon": {
+    "message": "Vorhandene Adressen für diesen Shop:"
+  },
+  "panelNotConfigured": {
+    "message": "Noch nicht eingerichtet: im Webmail ein Token erzeugen (bei Roundcube: Einstellungen → Einstellungen → Shop-Adressen-API) und „Mit Browser-Erweiterung verbinden“ wählen, oder ",
+    "description": "Followed by the link setupManuallyLink"
+  },
+  "setupManuallyLink": {
+    "message": "manuell einrichten"
+  },
+  "checking": {
+    "message": "Prüfe …"
+  },
+  "confirmInTab": {
+    "message": "Bitte die Verbindung im neu geöffneten Tab der Erweiterung bestätigen."
+  }
+}

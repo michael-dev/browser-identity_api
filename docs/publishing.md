@@ -21,13 +21,14 @@ Edge (Microsoft Edge Add-ons), Brave and Vivaldi install extensions from the Chr
 
 ### Store listing
 
-* **Name:** from the manifest, `Shop-Adressen`
+* **Name:** from the manifest, `Shop-Adressen` (German) / `Shop Addresses` (English)
 * **Summary:** from the manifest (≤ 132 characters)
 * **Category:** Shopping (alternatively Productivity → Tools)
-* **Language:** German
+* **Languages:** German and English (the extension's `_locales`)
 * **Icon:** `extension/icons/icon-128.png` (in the package)
 * **Screenshots (1280×800):** `store/screenshots/1-panel.png`, `2-filled.png`, `3-connect.png`,
-  `4-roundcube-settings.png`, `5-options.png`
+  `4-roundcube-settings.png`, `5-options.png`; for the English listing the same names in
+  `store/screenshots-en/`
 * **Small promo tile (440×280):** `store/screenshots/promo-440x280.png`
 * **Homepage:** <https://github.com/michael-dev/browser-identity_api>
 * **Support:** <https://github.com/michael-dev/browser-identity_api/issues>
@@ -61,7 +62,7 @@ Requirements:
 • A mail server offering the shop address REST API (open specification), e.g. Roundcube 1.5–1.7 with the plugin identity_api: https://github.com/michael-dev/roundcube-identity_api
 • A personal access token from that server – in Roundcube one click on "Connect browser extension" in the settings
 
-Privacy: The extension only talks to the server whose API URL you configure. It sends your token, the shop name and the chosen domain and receives the generated address. No analytics, no tracking, no third parties. The user interface is in German. Source code: https://github.com/michael-dev/browser-identity_api
+Privacy: The extension only talks to the server whose API URL you configure. It sends your token, the shop name and the chosen domain and receives the generated address. No analytics, no tracking, no third parties. User interface in English and German. Source code: https://github.com/michael-dev/browser-identity_api
 ```
 
 ### Privacy practices
@@ -103,6 +104,7 @@ plugin, see *Development* in the README):
 
 ```bash
 SCREENSHOTS=$PWD/store/screenshots E2E=1 make integration-test
+SCREENSHOTS=$PWD/store/screenshots-en E2E_LANG=en-US E2E=1 make integration-test
 ```
 
 The server name `webmail.example.org` in them replaces the local test server's address, the shop is

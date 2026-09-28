@@ -1,26 +1,25 @@
 <!doctype html>
-<html lang="de">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Shop-Adressen – Verbinden</title>
+  <title data-i18n="connectTitle"></title>
   <link rel="stylesheet" href="../options/options.css">
   <link rel="stylesheet" href="connect.css">
 </head>
 <body>
   <main>
-    <h1>Shop-Adressen mit deinem Mailserver verbinden?</h1>
-    <p id="status">Lade …</p>
+    <h1 data-i18n="connectHeading"></h1>
+    <p id="status" data-i18n="loading"></p>
     <section id="details" hidden>
-      <p>Server</p>
+      <p data-i18n="server"></p>
       <p id="host" class="host"></p>
-      <p class="hint">API-URL: <span id="url"></span><br>Konto: <span id="user"></span></p>
+      <p class="hint"><span data-i18n="apiUrl"></span>: <span id="url"></span><br><span data-i18n="account"></span>: <span id="user"></span></p>
       <p id="warning" class="warning" hidden></p>
-      <p>Nur bestätigen, wenn das die Adresse deines Mailservers ist und du gerade selbst in dessen Einstellungen
-        „Mit Browser-Erweiterung verbinden“ gewählt hast.</p>
+      <p data-i18n="connectConfirmHint"></p>
       <div class="buttons">
-        <button id="confirm" type="button" class="primary">Verbinden</button>
-        <button id="cancel" type="button">Abbrechen</button>
+        <button id="confirm" type="button" class="primary" data-i18n="connect"></button>
+        <button id="cancel" type="button" data-i18n="cancel"></button>
       </div>
     </section>
   </main>

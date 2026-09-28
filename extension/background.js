@@ -119,11 +119,11 @@ async function uiSettings() {
 function connectUrl(sender, api) {
   const page = sender && sender.tab && sender.url ? new URL(sender.url) : null;
   if (!page || !/^https?:$/.test(page.protocol)) {
-    throw new Error('Verbinden ist nur von einer Webseite aus möglich.');
+    throw new Error(rcidT('connectFromPageOnly'));
   }
   const url = new URL(String(api || 'api/identity/'), new URL('./', page));
   if (url.origin !== page.origin) {
-    throw new Error('Die API liegt auf einem anderen Server als die Seite. Bitte URL und Token in den Einstellungen der Erweiterung eintragen.');
+    throw new Error(rcidT('connectOtherServer'));
   }
   return RcApi.normalizeBaseUrl(url.toString());
 }
@@ -159,7 +159,7 @@ function randomId() {
 async function connectOffer(token, api, sender) {
   const apiUrl = connectUrl(sender, api);
   if (typeof token !== 'string' || !/^\d+\.[0-9a-f]{8}\.[\w-]{20,}$/.test(token)) {
-    throw new Error('Ungültiges Token.');
+    throw new Error(rcidT('invalidToken'));
   }
   const current = await RcApi.getSettings();
   const info = await RcApi.info(Object.assign({}, current, { apiUrl, token }), { rotate: false });
@@ -178,7 +178,7 @@ async function connectDetails(id, sender) {
   }
   const offer = await takeOffer(id, false);
   if (!offer) {
-    throw new Error('Die Anfrage ist abgelaufen. Bitte im Webmail erneut „Mit Browser-Erweiterung verbinden“ wählen.');
+    throw new Error(rcidT('offerExpired'));
   }
   const current = await RcApi.getSettings();
   const connected = Boolean(current.apiUrl && current.token);
@@ -196,7 +196,7 @@ async function connectConfirm(id, sender) {
   }
   const offer = await takeOffer(id, true);
   if (!offer) {
-    throw new Error('Die Anfrage ist abgelaufen. Bitte im Webmail erneut „Mit Browser-Erweiterung verbinden“ wählen.');
+    throw new Error(rcidT('offerExpired'));
   }
   await browser.storage.local.set({ apiUrl: offer.apiUrl, token: offer.token, pending: null, connectedUser: offer.user });
   return { url: offer.apiUrl, user: offer.user };
@@ -252,8 +252,8 @@ if (menus) {
   browser.runtime.onInstalled.addListener(() => {
     // Chromium before 123 returns no Promise here
     Promise.resolve(menus.removeAll()).then(() => {
-      menus.create({ id: 'rcid-create', title: 'Neue Shop-Adresse erzeugen und einfügen', contexts: ['editable'] });
-      menus.create({ id: 'rcid-panel', title: 'Shop-Adresse auswählen …', contexts: ['editable'] });
+      menus.create({ id: 'rcid-create', title: rcidT('menuCreate'), contexts: ['editable'] });
+      menus.create({ id: 'rcid-panel', title: rcidT('menuPanel'), contexts: ['editable'] });
     });
   });
 
@@ -277,7 +277,7 @@ if (menus) {
       const res = await browser.tabs.sendMessage(tab.id,
         { type: 'fill', email: identity.email, mode: 'context', targetElementId: info.targetElementId }, target);
       if (!res || !res.filled) {
-        await browser.tabs.sendMessage(tab.id, { type: 'notify', text: `Neue Adresse ${identity.email} – kein Feld zum Einfügen gefunden.` }, target);
+        await browser.tabs.sendMessage(tab.id, { type: 'notify', text: rcidT('notifyNoField', identity.email) }, target);
       }
     } catch (e) {
       await browser.tabs.sendMessage(tab.id, { type: 'notify', text: e.message }, target).catch(() => {});

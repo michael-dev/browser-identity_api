@@ -1,0 +1,352 @@
+{
+  "extName": {
+    "message": "Shop Addresses",
+    "description": "Name of the extension"
+  },
+  "extDescription": {
+    "message": "Creates a separate e-mail address per shop in the checkout form, through the shop address API of your mail server.",
+    "description": "Extension description"
+  },
+  "actionTitle": {
+    "message": "Create shop address",
+    "description": "Toolbar button tooltip"
+  },
+  "shopAddress": {
+    "message": "Shop address",
+    "description": "Title of popup and panel"
+  },
+  "settings": {
+    "message": "Settings"
+  },
+  "notConnected": {
+    "message": "The extension is not connected to your mail server yet."
+  },
+  "connectHowto": {
+    "message": "The easiest way: in your webmail (Roundcube: Settings → Preferences → Shop address API) enter a device name, save and click “Connect browser extension”."
+  },
+  "setupManually": {
+    "message": "Set up manually"
+  },
+  "shop": {
+    "message": "Shop",
+    "description": "Label of the shop name field"
+  },
+  "shopPlaceholder": {
+    "message": "e.g. bookshop"
+  },
+  "createAndInsert": {
+    "message": "Create new address & insert"
+  },
+  "copy": {
+    "message": "Copy"
+  },
+  "insert": {
+    "message": "Insert"
+  },
+  "existingForShop": {
+    "message": "Existing addresses for this shop"
+  },
+  "noAnswer": {
+    "message": "No answer from the extension."
+  },
+  "inserted": {
+    "message": "Inserted."
+  },
+  "insertedCopied": {
+    "message": "Inserted and copied."
+  },
+  "insertedFields": {
+    "message": "Inserted ($1 fields).",
+    "description": "$1: number of fields"
+  },
+  "insertedFieldsCopied": {
+    "message": "Inserted ($1 fields) and copied.",
+    "description": "$1: number of fields"
+  },
+  "noFieldCopied": {
+    "message": "No input field found – the address was copied to the clipboard."
+  },
+  "noField": {
+    "message": "No input field found."
+  },
+  "copied": {
+    "message": "Copied."
+  },
+  "copyFailed": {
+    "message": "Copying failed."
+  },
+  "creating": {
+    "message": "Creating address …"
+  },
+  "loading": {
+    "message": "Loading …"
+  },
+  "enterShop": {
+    "message": "Please enter a shop name."
+  },
+  "optionsTitle": {
+    "message": "Shop Addresses – Settings"
+  },
+  "permissionNeeded": {
+    "message": "The extension needs access to websites to fill in e-mail fields and to reach your mail server."
+  },
+  "grantAccess": {
+    "message": "Allow access"
+  },
+  "connectionHeading": {
+    "message": "Connection to the mail server"
+  },
+  "connectionHint": {
+    "message": "The extension works with any mail server offering the shop address API, e.g. Roundcube with the identity_api plugin. The easiest way is to connect it right in your webmail (Roundcube: Settings → Preferences → Shop address API: enter a device name, save and click “Connect browser extension”). Alternatively enter the API URL and token here."
+  },
+  "apiUrl": {
+    "message": "API URL"
+  },
+  "apiUrlHint": {
+    "message": "The URL of your mail server's shop address API (Roundcube: Settings → Preferences → Shop address API, section “Connection”)."
+  },
+  "apiToken": {
+    "message": "API token"
+  },
+  "tokenHint": {
+    "message": "One token per device, created on your mail server (Roundcube: Settings → Preferences → Shop address API)."
+  },
+  "testConnection": {
+    "message": "Test connection"
+  },
+  "defaultDomain": {
+    "message": "Default domain"
+  },
+  "serverDefault": {
+    "message": "(server default)"
+  },
+  "behaviour": {
+    "message": "Behaviour"
+  },
+  "optInlineButton": {
+    "message": "Show the button in e-mail fields"
+  },
+  "optFillConfirm": {
+    "message": "Also fill confirmation fields (“repeat e-mail”)"
+  },
+  "optCopy": {
+    "message": "Also copy the address when inserting it from the popup"
+  },
+  "save": {
+    "message": "Save"
+  },
+  "overridesHeading": {
+    "message": "Remembered shop names"
+  },
+  "overridesHint": {
+    "message": "If you change the suggested shop name, the extension remembers the name for that website."
+  },
+  "website": {
+    "message": "Website"
+  },
+  "shopName": {
+    "message": "Shop name"
+  },
+  "noEntries": {
+    "message": "No entries."
+  },
+  "learnedHeading": {
+    "message": "Remembered e-mail fields"
+  },
+  "learnedHint": {
+    "message": "Fields that are not recognizable as e-mail fields, into which you inserted an address from the popup or context menu. The button appears there automatically from now on."
+  },
+  "field": {
+    "message": "Field"
+  },
+  "remove": {
+    "message": "Remove"
+  },
+  "invalidUrl": {
+    "message": "Invalid URL."
+  },
+  "testing": {
+    "message": "Testing …"
+  },
+  "connectedAs": {
+    "message": "Connected as $1. Domains: $2.",
+    "description": "$1: account, $2: domains"
+  },
+  "httpsRequiredToken": {
+    "message": "The API URL has to start with https://, otherwise the token would be sent unencrypted."
+  },
+  "saved": {
+    "message": "Saved."
+  },
+  "connectTitle": {
+    "message": "Shop Addresses – Connect"
+  },
+  "connectHeading": {
+    "message": "Connect Shop Addresses to your mail server?"
+  },
+  "server": {
+    "message": "Server"
+  },
+  "account": {
+    "message": "Account"
+  },
+  "connectConfirmHint": {
+    "message": "Only confirm if this is the address of your mail server and you just chose “Connect browser extension” in its settings yourself."
+  },
+  "connect": {
+    "message": "Connect"
+  },
+  "cancel": {
+    "message": "Cancel"
+  },
+  "unknownError": {
+    "message": "Unknown error"
+  },
+  "warnReplaceServer": {
+    "message": "The extension is connected to $1 so far. This connection will be replaced.",
+    "description": "$1: host"
+  },
+  "warnOtherAccount": {
+    "message": "Different account: so far $1, new $2.",
+    "description": "$1, $2: accounts"
+  },
+  "warnReplaceToken": {
+    "message": "The previous token will be replaced by the new one."
+  },
+  "warnInsecure": {
+    "message": "Unencrypted connection (only for tests on localhost)."
+  },
+  "connectedTo": {
+    "message": "Connected to $1 ($2). You can now create shop addresses in checkout forms.",
+    "description": "$1: host, $2: account"
+  },
+  "connectFromPageOnly": {
+    "message": "Connecting is only possible from a web page."
+  },
+  "connectOtherServer": {
+    "message": "The API is on a different server than the page. Please enter the URL and token in the extension's settings."
+  },
+  "invalidToken": {
+    "message": "Invalid token."
+  },
+  "offerExpired": {
+    "message": "The request has expired. Please choose “Connect browser extension” in your webmail again."
+  },
+  "menuCreate": {
+    "message": "Create and insert new shop address",
+    "description": "Context menu"
+  },
+  "menuPanel": {
+    "message": "Choose shop address …",
+    "description": "Context menu"
+  },
+  "notifyNoField": {
+    "message": "New address $1 – no field found to insert it.",
+    "description": "$1: e-mail address"
+  },
+  "notConfigured": {
+    "message": "The extension is not set up yet (API URL and token in the settings)."
+  },
+  "httpsRequired": {
+    "message": "The API URL has to start with https://."
+  },
+  "timeout": {
+    "message": "The mail server did not answer in time."
+  },
+  "unreachable": {
+    "message": "Mail server not reachable ($1).",
+    "description": "$1: error"
+  },
+  "invalidResponse": {
+    "message": "No valid API response (HTTP $1). Is the API URL right (Roundcube shows it under Settings → Preferences → Shop address API)?",
+    "description": "$1: HTTP status"
+  },
+  "serverError": {
+    "message": "Server error: $1",
+    "description": "$1: detail"
+  },
+  "err_unauthorized": {
+    "message": "Token invalid, revoked or expired."
+  },
+  "err_domain_not_allowed": {
+    "message": "This domain is not allowed on the server."
+  },
+  "err_shop_missing": {
+    "message": "Please enter a shop name."
+  },
+  "err_invalid_shop": {
+    "message": "Invalid shop name."
+  },
+  "err_identity_limit_reached": {
+    "message": "Maximum number of identities reached."
+  },
+  "err_rate_limit_exceeded": {
+    "message": "Too many new addresses in a short time. Please try again later."
+  },
+  "err_address_too_long": {
+    "message": "Address too long. Please use a shorter shop name."
+  },
+  "err_identities_disabled": {
+    "message": "Additional identities are not allowed on this server."
+  },
+  "err_not_found": {
+    "message": "Not found (address deleted or wrong API URL)."
+  },
+  "err_delete_failed": {
+    "message": "The address could not be deleted."
+  },
+  "err_static_token": {
+    "message": "This token is not renewed."
+  },
+  "err_no_domain_configured": {
+    "message": "No domain for new addresses is set up on the server."
+  },
+  "err_saving_failed": {
+    "message": "Saving on the server failed."
+  },
+  "buttonTitle": {
+    "message": "Create / choose shop address",
+    "description": "Tooltip of the button in e-mail fields"
+  },
+  "noEmailField": {
+    "message": "No e-mail field found."
+  },
+  "createNew": {
+    "message": "Create new address"
+  },
+  "close": {
+    "message": "Close"
+  },
+  "fieldGone": {
+    "message": "$1 created – the field no longer exists, please insert it with the extension's toolbar button.",
+    "description": "$1: e-mail address"
+  },
+  "insertedEmail": {
+    "message": "$1 inserted",
+    "description": "$1: e-mail address"
+  },
+  "insertedEmailFields": {
+    "message": "$1 inserted ($2 fields)",
+    "description": "$1: e-mail address, $2: number of fields"
+  },
+  "extUnreachable": {
+    "message": "Extension not reachable ($1). Please reload the page.",
+    "description": "$1: error"
+  },
+  "existingForShopColon": {
+    "message": "Existing addresses for this shop:"
+  },
+  "panelNotConfigured": {
+    "message": "Not set up yet: create a token in your webmail (Roundcube: Settings → Preferences → Shop address API) and choose “Connect browser extension”, or ",
+    "description": "Followed by the link setupManuallyLink"
+  },
+  "setupManuallyLink": {
+    "message": "set it up manually"
+  },
+  "checking": {
+    "message": "Checking …"
+  },
+  "confirmInTab": {
+    "message": "Please confirm the connection in the extension's newly opened tab."
+  }
+}
