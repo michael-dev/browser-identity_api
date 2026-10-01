@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 2.4
 
 * **English user interface:** the extension follows the browser's language (English or German;
   `extension/_locales`). Name in English: “Shop Addresses”. The end-to-end test runs in either
