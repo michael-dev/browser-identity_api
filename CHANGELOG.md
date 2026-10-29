@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 2.5
 
 * The inline button no longer covers the icon of a password manager (e.g. KeePassXC-Browser,
   Bitwarden) or of the page in the e-mail field: if the right end of the field is taken, it moves
