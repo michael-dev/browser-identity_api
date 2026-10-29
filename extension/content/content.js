@@ -345,9 +345,65 @@
       node.style.left = left + 'px';
       node.style.top = (r.bottom + sy + 4) + 'px';
     } else {
-      node.style.left = (r.right + sx - 28) + 'px';
-      node.style.top = (r.top + sy + (r.height - 24) / 2) + 'px';
+      const top = r.top + (r.height - BTN) / 2;
+      node.style.left = (buttonLeft(input, r, top) + sx) + 'px';
+      node.style.top = (top + sy) + 'px';
     }
+  }
+
+  const BTN = 24; // button size
+  const GAP = 4;
+
+  /**
+   * Left edge (viewport) of the inline button: at the right end of the field,
+   * moved to the left while another icon sits there, e.g. the one of a
+   * password manager (KeePassXC, Bitwarden, ...) or of the page itself.
+   */
+  function buttonLeft(input, r, top) {
+    const start = r.right - BTN - GAP;
+    let left = start;
+    for (let i = 0; i < 4; i++) {
+      const blocker = foreignIconAt(input, left, top);
+      if (blocker === null) return left;
+      left = Math.min(left, blocker) - BTN - GAP;
+      if (left < r.left + GAP) return start; // no free spot inside the field
+    }
+    return start;
+  }
+
+  /**
+   * Another element covering the area [left, left+BTN] x [top, top+BTN] that
+   * is neither the field, one of its ancestors nor our own overlay. Returns
+   * its left edge (or the probed left edge if unknown, e.g. a closed shadow
+   * root positioned outside its host), or null if the area is free.
+   */
+  function foreignIconAt(input, left, top) {
+    const own = new Set();
+    for (let n = input; n; n = n.parentNode || n.host) own.add(n);
+    if (ui) own.add(ui.host);
+    // what the document reports for the field (its shadow host if it is in a shadow root)
+    let hit = input;
+    while (hit.getRootNode() !== document && hit.getRootNode().host) hit = hit.getRootNode().host;
+    const points = [[BTN / 2, BTN / 2], [3, 3], [BTN - 3, 3], [3, BTN - 3], [BTN - 3, BTN - 3]];
+    let found = null;
+    for (const [dx, dy] of points) {
+      const x = left + dx;
+      const y = top + dy;
+      if (x < 0 || y < 0 || x >= window.innerWidth || y >= window.innerHeight) continue;
+      // topmost first: anything after the field lies underneath it
+      for (const e of document.elementsFromPoint(x, y)) {
+        if (e === hit) break;
+        if (own.has(e)) continue;
+        const er = e.getBoundingClientRect();
+        const inside = x >= er.left && x <= er.right && y >= er.top && y <= er.bottom;
+        // big elements (e.g. a transparent layer over the form) are not icons
+        if (inside && (er.width > 3 * BTN || er.height > 3 * BTN)) continue;
+        const l = inside ? er.left : left;
+        found = found === null ? l : Math.min(found, l);
+        break;
+      }
+    }
+    return found;
   }
 
   function reposition() {
@@ -378,6 +434,8 @@
     panelInput = input;
     u.button.hidden = false;
     place(u.button, input, false);
+    // password managers sometimes add their icon only after the focus
+    for (const ms of [150, 600, 1500]) setTimeout(reposition, ms);
   }
 
   function hideAll() {

@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+* The inline button no longer covers the icon of a password manager (e.g. KeePassXC-Browser,
+  Bitwarden) or of the page in the e-mail field: if the right end of the field is taken, it moves
+  to the left of that icon. Icons added only after the focus are taken into account as well.
+
 ## 2.4
 
 * **English user interface:** the extension follows the browser's language (English or German;
