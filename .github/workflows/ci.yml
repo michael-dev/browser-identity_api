@@ -36,7 +36,8 @@ jobs:
   # the extension against Roundcube with the plugin (main of its repository)
   roundcube:
     name: Roundcube ${{ matrix.roundcube }} / PHP ${{ matrix.php }}, end-to-end in Chromium
-    runs-on: ubuntu-latest
+    # Playwright 1.56.1 supports Ubuntu 24.04; ubuntu-latest can move ahead.
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
